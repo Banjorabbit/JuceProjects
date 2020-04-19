@@ -5,6 +5,9 @@
     <Filter Include="PitchShift\Source">
       <UniqueIdentifier>{33B01F8E-EC61-6128-DE02-619C1022A701}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PitchShift\Utilities">
+      <UniqueIdentifier>{D8FD407D-4559-6186-19E6-B8BF88B6D9C1}</UniqueIdentifier>
+    </Filter>
     <Filter Include="PitchShift">
       <UniqueIdentifier>{CE759252-C994-4D25-F7B2-B6526987BD5F}</UniqueIdentifier>
     </Filter>
@@ -438,6 +441,9 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\PluginEditor.cpp">
       <Filter>PitchShift\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\PureCRTP\Utilities\pffft.c">
+      <Filter>PitchShift\Utilities</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\JUCE\modules\juce_audio_basics\buffers\juce_AudioChannelSet.cpp">
       <Filter>JUCE Modules\juce_audio_basics\buffers</Filter>
@@ -2435,6 +2441,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\PluginEditor.h">
       <Filter>PitchShift\Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\PureCRTP\Utilities\pffft.h">
+      <Filter>PitchShift\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\JUCE\modules\juce_audio_basics\audio_play_head\juce_AudioPlayHead.h">
       <Filter>JUCE Modules\juce_audio_basics\audio_play_head</Filter>

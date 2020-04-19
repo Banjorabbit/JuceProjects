@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="IU6IFL" name="PitchShift" projectType="audioplug" jucerVersion="5.4.7"
-              pluginChannelConfigs="{1,1}, {2,2}" pluginVST3Category="Pitch Shift">
+              pluginChannelConfigs="{1,1}, {2,2}" pluginVST3Category="Pitch Shift"
+              headerPath="../../../../PureCRTP/eigen&#10;../../../../PureCRTP/src/AsynchronousStreaming">
   <MAINGROUP id="Wmk4EG" name="PitchShift">
     <GROUP id="{FAD65978-A33E-97FC-66A0-E3924EB9B443}" name="Source">
       <FILE id="k0kWv9" name="PluginProcessor.cpp" compile="1" resource="0"
@@ -11,6 +12,10 @@
       <FILE id="mOANQF" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="dzeGfU" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+    </GROUP>
+    <GROUP id="{864FF9E3-E9F2-BDA0-76E1-891A0A0B027B}" name="Utilities">
+      <FILE id="sbZcfW" name="pffft.h" compile="0" resource="0" file="../../PureCRTP/Utilities/pffft.h"/>
+      <FILE id="Iv4FPK" name="pffft.c" compile="1" resource="0" file="../../PureCRTP/Utilities/pffft.c"/>
     </GROUP>
   </MAINGROUP>
   <EXPORTFORMATS>

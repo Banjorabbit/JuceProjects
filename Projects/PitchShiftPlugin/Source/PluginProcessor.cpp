@@ -65,7 +65,7 @@ bool PitchShiftAudioProcessor::isMidiEffect() const
 
 double PitchShiftAudioProcessor::getTailLengthSeconds() const
 {
-    return 0.0;
+    return 0.05;
 }
 
 int PitchShiftAudioProcessor::getNumPrograms()
@@ -97,6 +97,9 @@ void PitchShiftAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+	int nIn = getNumInputChannels();
+	int nOut = getNumInputChannels();
+	PitchShifter.Initialize(samplesPerBlock, 1, static_cast<float>(sampleRate));
 }
 
 void PitchShiftAudioProcessor::releaseResources()
@@ -132,30 +135,50 @@ bool PitchShiftAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 void PitchShiftAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
     ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+	Eigen::ArrayXXf input(buffer.getNumSamples(), buffer.getNumChannels());
+	for (auto channel = 0; channel < buffer.getNumChannels(); channel++)
+	
+	{
+		auto* channelData = buffer.getWritePointer(channel);
+		for (auto sample = 0; sample < buffer.getNumSamples(); sample++)
+		{
+			input(sample, channel) = channelData[sample];
+		}
+	}
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
+	Eigen::Map<Eigen::ArrayXf> IOMap(buffer.getWritePointer(0), buffer.getNumSamples());
+	PitchShifter.Process(IOMap, IOMap);
+	if (getTotalNumOutputChannels() == 2) 
+	{
+		Eigen::Map<Eigen::ArrayXf> IOMap2(buffer.getWritePointer(1), buffer.getNumSamples());
+		IOMap2 = IOMap;
+	}
 
-        // ..do something to the data...
-    }
+    //auto totalNumInputChannels  = getTotalNumInputChannels();
+    //auto totalNumOutputChannels = getTotalNumOutputChannels();
+
+    //// In case we have more outputs than inputs, this code clears any output
+    //// channels that didn't contain input data, (because these aren't
+    //// guaranteed to be empty - they may contain garbage).
+    //// This is here to avoid people getting screaming feedback
+    //// when they first compile a plugin, but obviously you don't need to keep
+    //// this code if your algorithm always overwrites all the output channels.
+    //for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+    //    buffer.clear (i, 0, buffer.getNumSamples());
+
+    //// This is the place where you'd normally do the guts of your plugin's
+    //// audio processing...
+    //// Make sure to reset the state if your inner loop is processing
+    //// the samples and the outer loop is handling the channels.
+    //// Alternatively, you can process the samples with the channels
+    //// interleaved by keeping the same state.
+    //for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    //{
+    //    auto* channelData = buffer.getWritePointer (channel);
+
+    //    // ..do something to the data...
+    //}
 }
 
 //==============================================================================

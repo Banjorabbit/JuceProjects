@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "PitchShift.h"
 
 //==============================================================================
 /**
@@ -55,7 +56,15 @@ public:
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+	float Pitch;
+	void UpdateParameters()
+	{
+		auto p = PitchShifter.Algo.GetParameters();
+		p.StretchFactor = Pitch;
+		PitchShifter.Algo.SetParameters(p);
+	}
 private:
+	PitchShiftStreaming PitchShifter;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchShiftAudioProcessor)
 };
