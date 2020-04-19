@@ -91,6 +91,8 @@ private:
 		sFI.Coefficients.BufferSize = C.BufferSize;
 		sFI.Parameters.WindowType = sFI.Parameters.HannWindow;
 		flag &= FilterbankInverse.Initialize(sFI);
+
+		flag &= InterpolateTime.Initialize();
 		return flag;
 	}
 
