@@ -121,7 +121,8 @@ private:
 			D.InverseDelay -= C.BufferSize;
 		}
 		yTime = D.OutBuffer.head(C.BufferSize);
-		D.OutBuffer.head(C.BufferSize) = D.OutBuffer.tail(C.BufferSize);
+		D.OutBuffer.head(3 * C.BufferSize) = D.OutBuffer.tail(3 * C.BufferSize);
+		D.OutBuffer.tail(C.BufferSize).setZero();
 		D.IndexOut -= C.BufferSize;
 	}
 
