@@ -1,0 +1,38 @@
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2017
+
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PitchShiftAdaptiveResolutionPlugin - Standalone Plugin", "PitchShiftAdaptiveResolutionPlugin_StandalonePlugin.vcxproj", "{8C2A7B75-4649-949E-6F47-40B71CD3D7EB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{52CAEB5A-83AF-7311-1B12-429CC19BB120} = {52CAEB5A-83AF-7311-1B12-429CC19BB120}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PitchShiftAdaptiveResolutionPlugin - VST3", "PitchShiftAdaptiveResolutionPlugin_VST3.vcxproj", "{4B04C3A2-F415-66B5-8BA5-8A59196C1A80}"
+	ProjectSection(ProjectDependencies) = postProject
+		{52CAEB5A-83AF-7311-1B12-429CC19BB120} = {52CAEB5A-83AF-7311-1B12-429CC19BB120}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PitchShiftAdaptiveResolutionPlugin - Shared Code", "PitchShiftAdaptiveResolutionPlugin_SharedCode.vcxproj", "{52CAEB5A-83AF-7311-1B12-429CC19BB120}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4B04C3A2-F415-66B5-8BA5-8A59196C1A80}.Debug|x64.ActiveCfg = Debug|x64
+		{4B04C3A2-F415-66B5-8BA5-8A59196C1A80}.Debug|x64.Build.0 = Debug|x64
+		{4B04C3A2-F415-66B5-8BA5-8A59196C1A80}.Release|x64.ActiveCfg = Release|x64
+		{4B04C3A2-F415-66B5-8BA5-8A59196C1A80}.Release|x64.Build.0 = Release|x64
+		{8C2A7B75-4649-949E-6F47-40B71CD3D7EB}.Debug|x64.ActiveCfg = Debug|x64
+		{8C2A7B75-4649-949E-6F47-40B71CD3D7EB}.Debug|x64.Build.0 = Debug|x64
+		{8C2A7B75-4649-949E-6F47-40B71CD3D7EB}.Release|x64.ActiveCfg = Release|x64
+		{8C2A7B75-4649-949E-6F47-40B71CD3D7EB}.Release|x64.Build.0 = Release|x64
+		{52CAEB5A-83AF-7311-1B12-429CC19BB120}.Debug|x64.ActiveCfg = Debug|x64
+		{52CAEB5A-83AF-7311-1B12-429CC19BB120}.Debug|x64.Build.0 = Debug|x64
+		{52CAEB5A-83AF-7311-1B12-429CC19BB120}.Release|x64.ActiveCfg = Release|x64
+		{52CAEB5A-83AF-7311-1B12-429CC19BB120}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

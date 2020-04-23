@@ -98,8 +98,11 @@ void PitchShiftAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
 	int nIn = getNumInputChannels();
-	int nOut = getNumInputChannels();
-	PitchShifter.Initialize(samplesPerBlock, 1, static_cast<float>(sampleRate));
+	PitchShifter0.Initialize(samplesPerBlock, 1, static_cast<float>(sampleRate));
+	if (nIn == 2)
+	{
+		PitchShifter1.Initialize(samplesPerBlock, 1, static_cast<float>(sampleRate));
+	}
 }
 
 void PitchShiftAudioProcessor::releaseResources()
@@ -136,23 +139,23 @@ void PitchShiftAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
 {
     ScopedNoDenormals noDenormals;
 
-	Eigen::ArrayXXf input(buffer.getNumSamples(), buffer.getNumChannels());
-	for (auto channel = 0; channel < buffer.getNumChannels(); channel++)
-	
-	{
-		auto* channelData = buffer.getWritePointer(channel);
-		for (auto sample = 0; sample < buffer.getNumSamples(); sample++)
-		{
-			input(sample, channel) = channelData[sample];
-		}
-	}
+	//Eigen::ArrayXXf input(buffer.getNumSamples(), buffer.getNumChannels());
+	//for (auto channel = 0; channel < buffer.getNumChannels(); channel++)
+	//
+	//{
+	//	auto* channelData = buffer.getWritePointer(channel);
+	//	for (auto sample = 0; sample < buffer.getNumSamples(); sample++)
+	//	{
+	//		input(sample, channel) = channelData[sample];
+	//	}
+	//}
 
-	Eigen::Map<Eigen::ArrayXf> IOMap(buffer.getWritePointer(0), buffer.getNumSamples());
-	PitchShifter.Process(IOMap, IOMap);
+	Eigen::Map<Eigen::ArrayXf> IOMap0(buffer.getWritePointer(0), buffer.getNumSamples());
+	PitchShifter0.Process(IOMap0, IOMap0);
 	if (getTotalNumOutputChannels() == 2) 
 	{
-		Eigen::Map<Eigen::ArrayXf> IOMap2(buffer.getWritePointer(1), buffer.getNumSamples());
-		IOMap2 = IOMap;
+		Eigen::Map<Eigen::ArrayXf> IOMap1(buffer.getWritePointer(1), buffer.getNumSamples());
+		PitchShifter1.Process(IOMap1, IOMap1);
 	}
 
     //auto totalNumInputChannels  = getTotalNumInputChannels();
