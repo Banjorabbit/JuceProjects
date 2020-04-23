@@ -96,8 +96,8 @@ class FFTConvolutionStreaming : public AsynchronousStreaming<FFTConvolutionStrea
 {
 	friend AsynchronousStreaming<FFTConvolutionStreaming, FFTConvolution>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return 0; }
-	int GetNChannelsOut(const int nChannels) const { const auto c = Algo.GetCoefficients(); return c.NChannels * c.NFiltersPerChannel; }
+	int CalculateLatencySamples() const { return 0; }
+	int CalculateNChannelsOut(const int nChannels) const { const auto c = Algo.GetCoefficients(); return c.NChannels * c.NFiltersPerChannel; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{

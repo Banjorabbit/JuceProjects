@@ -5,7 +5,7 @@
 #include "../InterpolationCubic.h"
 
 // TODO: Support for more than 1 channel
-// TODO: Investigate time-varying P.StretchFactor. Will D.Outbuffer overflow? Consider replacing D.OutBuffer with circularBuffer (CircBuffer.h)
+// TODO: Investigate time-varying P.StretchFactor. Consider replacing D.OutBuffer with circularBuffer (CircBuffer.h)
 class PitchShift : public Base<PitchShift>
 {
 	friend Base<PitchShift>;
@@ -16,20 +16,22 @@ public:
 	FilterbankSynthesis FilterbankInverse;
 	InterpolationCubic InterpolateTime;
 
+	int GetLatencySamples() const { return D.LatencySamples; }
+
 private:
 	struct Coefficients
 	{
 		int BufferSize = 128;
-		ConstrainedType<int> NChannels = { 1, 1, 1 };
 	} C;
 
 	struct Parameters
 	{
-		float StretchFactor = .8f;
+		float StretchFactor = 1.f;
 	} P;
 
 	struct Data
 	{
+		int LatencySamples;
 		int FFTSize, NBands, IndexOut;
 		float FractionalDelay, InverseFactor, InverseDelay;
 		Eigen::ArrayX2f Energy, Phase;
@@ -52,6 +54,8 @@ private:
 			Phase.resize(NBands, 2);
 			OutBuffer.resize(c.BufferSize * 4); // make big to accommodate changing P.stretchfactors
 			SynthesisBuffer.resize(c.BufferSize + 3);
+			IndexOut = static_cast<int>(OutBuffer.size()) / 2 + 1;
+			LatencySamples = IndexOut;
 			return true;
 		}
 		size_t GetAllocatedMemorySize() const
@@ -121,7 +125,8 @@ private:
 			D.InverseDelay -= C.BufferSize;
 		}
 		yTime = D.OutBuffer.head(C.BufferSize);
-		D.OutBuffer.head(C.BufferSize) = D.OutBuffer.tail(C.BufferSize);
+		D.OutBuffer.head(3 * C.BufferSize) = D.OutBuffer.tail(3 * C.BufferSize);
+		D.OutBuffer.tail(C.BufferSize).setZero();
 		D.IndexOut -= C.BufferSize;
 	}
 
@@ -133,8 +138,8 @@ class PitchShiftStreaming : public AsynchronousStreaming<PitchShiftStreaming, Pi
 	friend AsynchronousStreaming<PitchShiftStreaming, PitchShift>;
 
 	// latency is equal to reset-value of D.IndexOut 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return c.BufferSize * 2 + 1; }
-	int GetNChannelsOut(const int nChannels) const { return nChannels; }
+	int CalculateLatencySamples() const { return Algo.GetLatencySamples(); }
+	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{

@@ -96,12 +96,6 @@
     <ClInclude Include="..\..\src\FrequencyDomain\NoiseSuppression.h">
       <Filter>Header Files\FrequencyDomain</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\FrequencyDomain\TonalDetection.h">
-      <Filter>Header Files\FrequencyDomain</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\FrequencyDomain\VoiceActivationDetection.h">
-      <Filter>Header Files\FrequencyDomain</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\BaseClasses\GetSizeOfEigen.h">
       <Filter>Header Files\BaseClasses</Filter>
     </ClInclude>
@@ -135,9 +129,30 @@
     <ClInclude Include="..\..\src\AsynchronousStreaming\IIR2ndNonLin.h">
       <Filter>Header Files\AsynchronousStreaming</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\LoudnessModel.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\CriticalBands.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\DetectVoiceActivation.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\DetectTonal.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\DetectTransient.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousStreaming\PitchShiftAdaptiveResolution.h">
+      <Filter>Header Files\AsynchronousStreaming</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\AsynchronousStreaming\VirtualizationHeadphones.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\FrequencyDomain\CriticalBands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

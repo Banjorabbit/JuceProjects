@@ -265,8 +265,8 @@ class IIR2ndTimeVaryingLowPassFilterStreaming : public AsynchronousStreaming<IIR
 {
 	friend AsynchronousStreaming<IIR2ndTimeVaryingLowPassFilterStreaming, IIR2ndTimeVaryingLowPassFilter>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return 0; }
-	int GetNChannelsOut(const int nChannels) const { return nChannels; }
+	int CalculateLatencySamples() const { return 0; }
+	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{
@@ -280,8 +280,8 @@ class IIR2ndTimeVaryingHighPassFilterStreaming : public AsynchronousStreaming<II
 {
 	friend AsynchronousStreaming<IIR2ndTimeVaryingHighPassFilterStreaming, IIR2ndTimeVaryingHighPassFilter>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return 0; }
-	int GetNChannelsOut(const int nChannels) const { return nChannels; }
+	int CalculateLatencySamples() const { return 0; }
+	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{
@@ -295,8 +295,8 @@ class IIR2ndTimeVaryingBandPassFilterStreaming : public AsynchronousStreaming<II
 {
 	friend AsynchronousStreaming<IIR2ndTimeVaryingBandPassFilterStreaming, IIR2ndTimeVaryingBandPassFilter>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return 0; }
-	int GetNChannelsOut(const int nChannels) const { return nChannels; }
+	int CalculateLatencySamples() const { return 0; }
+	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{
@@ -310,8 +310,8 @@ class IIR2ndTimeVaryingNotchFilterStreaming : public AsynchronousStreaming<IIR2n
 {
 	friend AsynchronousStreaming<IIR2ndTimeVaryingNotchFilterStreaming, IIR2ndTimeVaryingNotchFilter>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return 0; }
-	int GetNChannelsOut(const int nChannels) const { return nChannels; }
+	int CalculateLatencySamples() const { return 0; }
+	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{
@@ -325,8 +325,8 @@ class IIR2ndTimeVaryingBellFilterStreaming : public AsynchronousStreaming<IIR2nd
 {
 	friend AsynchronousStreaming<IIR2ndTimeVaryingBellFilterStreaming, IIR2ndTimeVaryingBellFilter>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return 0; }
-	int GetNChannelsOut(const int nChannels) const { return nChannels; }
+	int CalculateLatencySamples() const { return 0; }
+	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{
@@ -340,8 +340,8 @@ class IIR2ndTimeVaryingHighShelfFilterStreaming : public AsynchronousStreaming<I
 {
 	friend AsynchronousStreaming<IIR2ndTimeVaryingHighShelfFilterStreaming, IIR2ndTimeVaryingHighShelfFilter>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return 0; }
-	int GetNChannelsOut(const int nChannels) const { return nChannels; }
+	int CalculateLatencySamples() const { return 0; }
+	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{
@@ -355,8 +355,8 @@ class IIR2ndTimeVaryingLowShelfFilterStreaming : public AsynchronousStreaming<II
 {
 	friend AsynchronousStreaming<IIR2ndTimeVaryingLowShelfFilterStreaming, IIR2ndTimeVaryingLowShelfFilter>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return 0; }
-	int GetNChannelsOut(const int nChannels) const { return nChannels; }
+	int CalculateLatencySamples() const { return 0; }
+	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{

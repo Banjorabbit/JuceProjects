@@ -62,7 +62,7 @@ public:
 		bool successFlag = Algo.Initialize(c);
 
 		NChannels = nChannels;
-		NChannelsOut = derived.GetNChannelsOut(NChannels);
+		NChannelsOut = derived.CalculateNChannelsOut(NChannels); // some algorithms does not care how many channels it gets and therefore does know how many input channels it is set up to process
 
 		if (std::round(static_cast<float>(bufferSizeExpected) / BufferSizeInternal) == static_cast<float>(bufferSizeExpected) / BufferSizeInternal)
 		{
@@ -74,8 +74,8 @@ public:
 		BufferOut.resize(BufferSizeInternal, NChannelsOut);
 		ResetData();
 
-		if (SynchronousProcessing) { LatencyTotalSamples = derived.GetLatencySamples(Algo.GetCoefficients()); }
-		else { LatencyTotalSamples = BufferSizeInternal + derived.GetLatencySamples(Algo.GetCoefficients()); }
+		if (SynchronousProcessing) { LatencyTotalSamples = derived.CalculateLatencySamples(); }
+		else { LatencyTotalSamples = BufferSizeInternal + derived.CalculateLatencySamples(); }
 
 		return successFlag;
 	}

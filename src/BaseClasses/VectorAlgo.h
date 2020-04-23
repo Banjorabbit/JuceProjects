@@ -1,7 +1,7 @@
 #pragma once
 #include <vector> 
 
-// Wrapper for std::vector that exposes the same interface as Base except Process (since why would you create a vector of Talgos if they are processed with the same input/output)
+// Wrapper for std::vector that exposes the same interface as Base except Process.
 // https://stackoverflow.com/questions/44098116/a-c11-wrapper-class-on-top-of-std-vector
 //
 // author: Kristian Timm Andersen

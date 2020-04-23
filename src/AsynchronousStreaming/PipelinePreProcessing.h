@@ -3,7 +3,7 @@
 #include "IIR2ndDF.h"
 #include "../Filterbank.h"
 #include "../FrequencyDomain/EchoCancellerMomentum.h"
-#include "../FrequencyDomain/VoiceActivationDetection.h"
+#include "../FrequencyDomain/DetectVoiceActivation.h"
 #include "../FrequencyDomain/BeamformerAdaptive.h"
 #include "../FrequencyDomain/NoiseSuppression.h"
 
@@ -13,8 +13,8 @@ class PipelinePreProcessing : public Base<PipelinePreProcessing>
 	struct Coefficients; // forward declaration so CalculateNBuffersInFrame(Coefficients& c) can be defined
 
 public:
-	float GetDelay() const { return D.Delay; }
-	int GetFFTSize() const { return D.FFTSize; }
+	auto GetLatencySamples() const { return D.LatencySamples; }
+	auto GetFFTSize() const { return D.FFTSize; }
 	static int CalculateNBuffersInFrame(const Coefficients& c)
 	{
 		int nBuffersInFrame = 1 + static_cast<int>(c.DelayDesired * c.SampleRate / c.BufferSize);
@@ -26,7 +26,7 @@ public:
 	FilterbankAnalysis Filterbank;
 	FilterbankAnalysis FilterbankLoopback;
 	EchoCancellerMomentum EchoCanceller;
-	VoiceActivationDetection VAD;
+	DetectVoiceActivation VAD;
 	BeamformerAdaptive Beamformer;
 	NoiseSuppression NoiseReduction;
 	FilterbankSynthesis FilterbankInverse;
@@ -48,7 +48,7 @@ private:
 
 	struct Data
 	{
-		float Delay;
+		int LatencySamples;
 		int NChannelsInput;
 		int FFTSize, NBands, NBuffersInFrame;
 		bool Activity;
@@ -65,7 +65,7 @@ private:
 		{
 			NChannelsInput = std::max(c.NChannels - c.NChannelsLoopback, 0);
 			NBuffersInFrame = CalculateNBuffersInFrame(c);
-			Delay = static_cast<float>((NBuffersInFrame - 1) * c.BufferSize) / c.SampleRate;
+			LatencySamples = (NBuffersInFrame - 1) * c.BufferSize;
 			FFTSize = NBuffersInFrame * c.BufferSize;
 			NBands = FFTSize / 2 + 1;
 			BufferTime.resize(c.BufferSize, NChannelsInput);
@@ -171,8 +171,8 @@ class PipelinePreProcessingStreaming : public AsynchronousStreaming<PipelinePreP
 {
 	friend AsynchronousStreaming<PipelinePreProcessingStreaming, PipelinePreProcessing>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return (Algo.CalculateNBuffersInFrame(c) - 1) * c.BufferSize; }
-	int GetNChannelsOut(const int nChannels) const { return 1; }
+	int CalculateLatencySamples() const { return Algo.GetLatencySamples(); }
+	int CalculateNChannelsOut(const int nChannels) const { return 1; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{

@@ -10,7 +10,7 @@ inline auto GetAllocatedMemorySize() const
 	}
 	else
 	{
-		return (size_t)0;
+		return size_t(0);
 	}
 	
 }

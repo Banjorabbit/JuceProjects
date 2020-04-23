@@ -397,8 +397,8 @@ class IIR2ndDF2Streaming : public AsynchronousStreaming<IIR2ndDF2Streaming, IIR2
 {
 	friend AsynchronousStreaming<IIR2ndDF2Streaming, IIR2ndDF2>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return 0; }
-	int GetNChannelsOut(const int nChannels) const { return nChannels; }
+	int CalculateLatencySamples() const { return 0; }
+	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{
@@ -412,8 +412,8 @@ class IIR2ndDF2TransposedStreaming : public AsynchronousStreaming<IIR2ndDF2Trans
 {
 	friend AsynchronousStreaming<IIR2ndDF2TransposedStreaming, IIR2ndDF2Transposed>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return 0; }
-	int GetNChannelsOut(const int nChannels) const { return nChannels; }
+	int CalculateLatencySamples() const { return 0; }
+	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{
@@ -427,8 +427,8 @@ class IIR2ndCascadedStreaming : public AsynchronousStreaming<IIR2ndCascadedStrea
 {
 	friend AsynchronousStreaming<IIR2ndCascadedStreaming, IIR2ndCascaded>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return 0; }
-	int GetNChannelsOut(const int nChannels) const { return nChannels; }
+	int CalculateLatencySamples() const { return 0; }
+	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{
