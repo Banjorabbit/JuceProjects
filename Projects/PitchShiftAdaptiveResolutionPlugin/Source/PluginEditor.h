@@ -16,7 +16,7 @@
 //==============================================================================
 /**
 */
-class PitchShiftAdaptiveResolutionPluginAudioProcessorEditor  : public AudioProcessorEditor
+class PitchShiftAdaptiveResolutionPluginAudioProcessorEditor  : public AudioProcessorEditor, private Slider::Listener
 {
 public:
     PitchShiftAdaptiveResolutionPluginAudioProcessorEditor (PitchShiftAdaptiveResolutionPluginAudioProcessor&);
@@ -30,6 +30,9 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     PitchShiftAdaptiveResolutionPluginAudioProcessor& processor;
+
+	void sliderValueChanged(Slider *slider) override;
+	Slider Pitch;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchShiftAdaptiveResolutionPluginAudioProcessorEditor)
 };

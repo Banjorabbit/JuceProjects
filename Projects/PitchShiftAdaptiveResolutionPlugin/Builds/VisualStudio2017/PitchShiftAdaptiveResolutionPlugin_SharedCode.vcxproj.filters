@@ -2,6 +2,9 @@
 
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="PitchShiftAdaptiveResolutionPlugin\Utilities">
+      <UniqueIdentifier>{986474C5-FFBA-276A-DDA4-7DC18400A51A}</UniqueIdentifier>
+    </Filter>
     <Filter Include="PitchShiftAdaptiveResolutionPlugin\Source">
       <UniqueIdentifier>{541F466D-4B87-2832-2143-690FA6A4D7ED}</UniqueIdentifier>
     </Filter>
@@ -433,6 +436,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\PureCRTP\Utilities\pffft.c">
+      <Filter>PitchShiftAdaptiveResolutionPlugin\Utilities</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\PluginProcessor.cpp">
       <Filter>PitchShiftAdaptiveResolutionPlugin\Source</Filter>
     </ClCompile>
@@ -2430,6 +2436,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\PureCRTP\Utilities\pffft.h">
+      <Filter>PitchShiftAdaptiveResolutionPlugin\Utilities</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\PluginProcessor.h">
       <Filter>PitchShiftAdaptiveResolutionPlugin\Source</Filter>
     </ClInclude>

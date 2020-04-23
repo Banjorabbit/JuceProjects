@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="Tfls5l" name="PitchShiftAdaptiveResolutionPlugin" projectType="audioplug"
-              jucerVersion="5.4.7">
+              jucerVersion="5.4.7" pluginChannelConfigs="{1,1}, {2,2}" headerPath="../../../../PureCRTP/eigen&#10;../../../../PureCRTP/src/AsynchronousStreaming">
   <MAINGROUP id="QeaXXo" name="PitchShiftAdaptiveResolutionPlugin">
+    <GROUP id="{21DBD3E0-6C66-FE79-8541-09BFD93DED8D}" name="Utilities">
+      <FILE id="W7DXaF" name="pffft.c" compile="1" resource="0" file="../../PureCRTP/Utilities/pffft.c"/>
+      <FILE id="ZsfGwp" name="pffft.h" compile="0" resource="0" file="../../PureCRTP/Utilities/pffft.h"/>
+    </GROUP>
     <GROUP id="{9B28E6C6-A2F0-C8CC-B812-8C2A89D6CBB3}" name="Source">
       <FILE id="gitSDS" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
