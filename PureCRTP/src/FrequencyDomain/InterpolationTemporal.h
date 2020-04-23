@@ -1,6 +1,5 @@
 #pragma once
 #include "../BaseClasses/PureCRTP.h"
-#include "TonalDetection.h"
 
 struct I::InterpolationTemporal
 {

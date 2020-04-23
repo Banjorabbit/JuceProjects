@@ -163,9 +163,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\UnitTest\LoggerOutput.h" />
+    <ClInclude Include="..\..\..\UnitTest\unittest.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\UnitTest\unittest1.cpp" />
+    <ClCompile Include="..\..\..\UnitTest\unittest.cpp" />
+    <ClCompile Include="..\..\..\UnitTest\unittestAsynchronousStreaming.cpp" />
+    <ClCompile Include="..\..\..\UnitTest\unittestEigen.cpp" />
+    <ClCompile Include="..\..\..\UnitTest\unittestFrequencyDomain.cpp" />
+    <ClCompile Include="..\..\..\UnitTest\unittestUtilities.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -12,6 +12,13 @@ struct I
 	// define In type
 	template<typename T>
 	using In = const Eigen::Ref<const T>&;
+
+	template<typename T>
+	using InArray = In < Eigen::Array<T, Eigen::Dynamic, 1> >;
+
+	template<typename T>
+	using InArray2D = In < Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> >;
+
 	using Real = In<Eigen::ArrayXf>;
 	using Complex = In<Eigen::ArrayXcf>;
 	using Real2D = In<Eigen::ArrayXXf>;
@@ -44,6 +51,12 @@ struct I
 
 	template<typename T>
 	struct GetType<In<T>> { typedef T type; };
+
+	template<typename T>
+	struct GetType<Eigen::Array<T, Eigen::Dynamic, 1>> { typedef T type; };
+
+	template<typename T>
+	struct GetType<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> { typedef T type; };
 };
 
 // Eigen outputs should be Eigen::Ref<T> types: 
@@ -52,11 +65,19 @@ struct O
 	// define Out type
 	template<typename T>
 	using Out = Eigen::Ref<T>;
+
+	template<typename T>
+	using OutArray = Out< Eigen::Array<T, Eigen::Dynamic, 1> >;
+
+	template<typename T>
+	using OutArray2D = Out< Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> >;
+
 	using Real = Out<Eigen::ArrayXf>;
 	using Complex = Out<Eigen::ArrayXcf>;
+	using Bool = Out<Eigen::Array<bool, Eigen::Dynamic, 1>>;
 	using Real2D = Out<Eigen::ArrayXXf>;
 	using Complex2D = Out<Eigen::ArrayXXcf>;
-	using Bool = Out<Eigen::Array<bool, Eigen::Dynamic, 1>>;
+	using Bool2D = Out<Eigen::Array<bool, Eigen::Dynamic, Eigen::Dynamic>>;
 	
 	struct RealComplex { Real R; Complex C; };
 	struct RealReal { Real R1; Real R2; };
@@ -77,4 +98,10 @@ struct O
 
 	template<typename T>
 	struct GetType<Out<T>> { typedef T type; };
+
+	template<typename T>
+	struct GetType<Eigen::Array<T, Eigen::Dynamic, 1>> { typedef T type; };
+
+	template<typename T>
+	struct GetType<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> { typedef T type; };
 };

@@ -1,5 +1,3 @@
-#pragma once
-#include <vector> // used by VectorAlgo
 
 // Base defines the interface for an algorithm using CRTP and exposes:
 //	BASECLASSVERSION			- version number of base class

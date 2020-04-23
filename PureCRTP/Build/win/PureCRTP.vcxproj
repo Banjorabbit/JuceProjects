@@ -158,6 +158,7 @@
     <ClInclude Include="..\..\src\AsynchronousStreaming\NonparametricEqualizer.h" />
     <ClInclude Include="..\..\src\AsynchronousStreaming\PipelinePreProcessing.h" />
     <ClInclude Include="..\..\src\AsynchronousStreaming\PitchShift.h" />
+    <ClInclude Include="..\..\src\AsynchronousStreaming\PitchShiftAdaptiveResolution.h" />
     <ClInclude Include="..\..\src\AsynchronousStreaming\VirtualizationHeadphones.h" />
     <ClInclude Include="..\..\src\BaseClasses\AsynchronousStreaming.h" />
     <ClInclude Include="..\..\src\BaseClasses\Base.h" />
@@ -177,20 +178,24 @@
     <ClInclude Include="..\..\src\Filterbank.h" />
     <ClInclude Include="..\..\src\FIRMinPhase.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\BeamformerAdaptive.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\CriticalBands.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\DetectTransient.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerMomentum.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\EchoSuppressionCovariance.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\GainCalculation.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\InterpolationTemporal.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\LoudnessModel.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\MinPhaseSpectrum.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\NoiseEstimation.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\NoiseSuppression.h" />
-    <ClInclude Include="..\..\src\FrequencyDomain\TonalDetection.h" />
-    <ClInclude Include="..\..\src\FrequencyDomain\VoiceActivationDetection.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\DetectTonal.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\DetectVoiceActivation.h" />
     <ClInclude Include="..\..\src\InterpolationCubic.h" />
     <ClInclude Include="..\..\src\Upsampling2XCubic.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\AsynchronousStreaming\VirtualizationHeadphones.cpp" />
+    <ClCompile Include="..\..\src\FrequencyDomain\CriticalBands.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

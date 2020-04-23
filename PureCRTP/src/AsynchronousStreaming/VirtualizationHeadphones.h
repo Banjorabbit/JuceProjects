@@ -103,8 +103,8 @@ class VirtualizationHeadphonesStreaming : public AsynchronousStreaming< Virtuali
 {
 	friend AsynchronousStreaming<VirtualizationHeadphonesStreaming, VirtualizationHeadphones>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return Algo.GetLatencySamples(); }
-	int GetNChannelsOut(const int nChannels) const { return 2; }
+	int CalculateLatencySamples() const { return Algo.GetLatencySamples(); }
+	int CalculateNChannelsOut(const int nChannels) const { return 2; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{

@@ -2,9 +2,9 @@
 #include "../BaseClasses/PureCRTP.h"
 #include "NoiseEstimation.h"
 
-class VoiceActivationDetection : public Base<VoiceActivationDetection, I::Complex2D, O::Boolean>
+class DetectVoiceActivation : public Base<DetectVoiceActivation, I::Complex2D, O::Boolean>
 {
-	friend Base<VoiceActivationDetection, I::Complex2D, O::Boolean>;
+	friend Base<DetectVoiceActivation, I::Complex2D, O::Boolean>;
 
 public:
 	VectorAlgo<NoiseEstimationSPP> NoiseActivities;

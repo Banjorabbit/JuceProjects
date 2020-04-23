@@ -110,8 +110,8 @@ class NonparametricEqualizerStreaming : public AsynchronousStreaming<Nonparametr
 {
 	friend AsynchronousStreaming<NonparametricEqualizerStreaming, NonparametricEqualizer>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return 0; }
-	int GetNChannelsOut(const int nChannels) const { return nChannels; }
+	int CalculateLatencySamples() const { return 0; }
+	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{

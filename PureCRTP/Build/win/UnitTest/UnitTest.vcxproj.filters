@@ -18,9 +18,24 @@
     <ClInclude Include="..\..\..\UnitTest\LoggerOutput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\UnitTest\unittest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\UnitTest\unittest1.cpp">
+    <ClCompile Include="..\..\..\UnitTest\unittestAsynchronousStreaming.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\UnitTest\unittestEigen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\UnitTest\unittestUtilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\UnitTest\unittestFrequencyDomain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\UnitTest\unittest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -213,8 +213,8 @@ class IIR2ndNonLinLowpassStreaming : public AsynchronousStreaming<IIR2ndNonLinLo
 {
 	friend AsynchronousStreaming<IIR2ndNonLinLowpassStreaming, IIR2ndNonLinLowpass>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return 0; }
-	int GetNChannelsOut(const int nChannels) const { return nChannels; }
+	int CalculateLatencySamples() const { return 0; }
+	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{
@@ -228,8 +228,8 @@ class IIR2ndNonLinBandpassStreaming : public AsynchronousStreaming<IIR2ndNonLinB
 {
 	friend AsynchronousStreaming<IIR2ndNonLinBandpassStreaming, IIR2ndNonLinBandpass>;
 
-	int GetLatencySamples(const decltype(Algo.GetCoefficients())& c) const { return 0; }
-	int GetNChannelsOut(const int nChannels) const { return nChannels; }
+	int CalculateLatencySamples() const { return 0; }
+	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
 
 	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
 	{
