@@ -8,6 +8,8 @@
       <FILE id="ZsfGwp" name="pffft.h" compile="0" resource="0" file="../../PureCRTP/Utilities/pffft.h"/>
     </GROUP>
     <GROUP id="{9B28E6C6-A2F0-C8CC-B812-8C2A89D6CBB3}" name="Source">
+      <FILE id="gJ4gkE" name="CriticalBands.cpp" compile="1" resource="0"
+            file="../../PureCRTP/src/FrequencyDomain/CriticalBands.cpp"/>
       <FILE id="gitSDS" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="EtDPTd" name="PluginProcessor.h" compile="0" resource="0"

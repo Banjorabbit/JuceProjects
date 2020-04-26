@@ -11,7 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "PitchShift.h"
+#include "PitchShiftAdaptiveResolution.h"
 
 //==============================================================================
 /**
@@ -56,17 +56,21 @@ public:
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-	float Pitch;
+	float Pitch, DetectTransient;
 	void UpdateParameters()
 	{
 		auto p = PitchShifter0.Algo.GetParameters();
 		p.StretchFactor = Pitch;
 		PitchShifter0.Algo.SetParameters(p);
 		PitchShifter1.Algo.SetParameters(p);
+		auto p2 = PitchShifter0.Algo.TransientDetection.GetParameters();
+		p2.TransientThreshold = DetectTransient;
+		PitchShifter0.Algo.TransientDetection.SetParameters(p2);
+		PitchShifter1.Algo.TransientDetection.SetParameters(p2);
 	}
 private:
-	PitchShiftStreaming PitchShifter0;
-	PitchShiftStreaming PitchShifter1;
+	PitchShiftAdaptiveResolutionStreaming PitchShifter0;
+	PitchShiftAdaptiveResolutionStreaming PitchShifter1;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchShiftAdaptiveResolutionPluginAudioProcessor)
 };

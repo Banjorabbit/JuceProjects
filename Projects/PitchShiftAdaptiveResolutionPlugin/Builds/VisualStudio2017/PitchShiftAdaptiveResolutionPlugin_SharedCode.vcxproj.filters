@@ -439,6 +439,9 @@
     <ClCompile Include="..\..\..\..\PureCRTP\Utilities\pffft.c">
       <Filter>PitchShiftAdaptiveResolutionPlugin\Utilities</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\PureCRTP\src\FrequencyDomain\CriticalBands.cpp">
+      <Filter>PitchShiftAdaptiveResolutionPlugin\Source</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\PluginProcessor.cpp">
       <Filter>PitchShiftAdaptiveResolutionPlugin\Source</Filter>
     </ClCompile>

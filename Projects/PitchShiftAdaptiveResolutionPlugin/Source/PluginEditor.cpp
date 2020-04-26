@@ -26,6 +26,14 @@ PitchShiftAdaptiveResolutionPluginAudioProcessorEditor::PitchShiftAdaptiveResolu
 	Pitch.setValue(processor.Pitch);
 	addAndMakeVisible(&Pitch);
 	Pitch.addListener(this);
+
+	DetectTransient.setSliderStyle(Slider::LinearBarVertical);
+	DetectTransient.setRange(.5f, 1.f, .01f);
+	DetectTransient.setTextValueSuffix(" DetectTransient Factor");
+	DetectTransient.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
+	DetectTransient.setValue(processor.DetectTransient);
+	addAndMakeVisible(&DetectTransient);
+	DetectTransient.addListener(this);
 }
 
 PitchShiftAdaptiveResolutionPluginAudioProcessorEditor::~PitchShiftAdaptiveResolutionPluginAudioProcessorEditor()
@@ -48,10 +56,12 @@ void PitchShiftAdaptiveResolutionPluginAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
 	Pitch.setBounds(40, 30, 20, getHeight() - 60);
+	DetectTransient.setBounds(60, 30, 20, getHeight() - 60);
 }
 
 void PitchShiftAdaptiveResolutionPluginAudioProcessorEditor::sliderValueChanged(Slider * slider)
 {
 	processor.Pitch = static_cast<float>(Pitch.getValue());
+	processor.DetectTransient = static_cast<float>(DetectTransient.getValue());
 	processor.UpdateParameters();
 }
