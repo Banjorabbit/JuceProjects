@@ -34,7 +34,7 @@ private:
 
 	struct Data 
 	{
-		Eigen::ArrayXf xTimeLong, yTimeLong, yTimeShort;
+		Eigen::ArrayXf xTimeLong, yTimeLong, yTimeShort, PhaseOld;
 		decltype(PitchShiftShortFrame.GetParameters()) pShort;
 		decltype(PitchShiftLongFrame.GetParameters()) pLong;
 		int IndexLong, FFTSize, NBands;
@@ -43,6 +43,7 @@ private:
 			xTimeLong.setZero();
 			yTimeLong.setZero();
 			yTimeShort.setZero();
+			PhaseOld.setZero();
 			IndexLong = 0;
 		}
 		bool InitializeMemory(const Coefficients& c)
@@ -52,6 +53,7 @@ private:
 			yTimeShort.resize(c.BufferSize * c.LongFrameFactor);
 			FFTSize = 4 * c.BufferSize;
 			NBands = FFTSize / 2 + 1;
+			PhaseOld.resize(NBands);
 			return true;
 		}
 		size_t GetAllocatedMemorySize() const 
@@ -59,6 +61,7 @@ private:
 			size_t size = xTimeLong.GetAllocatedMemorySize();
 			size += yTimeLong.GetAllocatedMemorySize();
 			size += yTimeShort.GetAllocatedMemorySize();
+			size += PhaseOld.GetAllocatedMemorySize();
 			return size;
 		}
 		void OnParameterChange(const Parameters& p, const Coefficients& c) 
@@ -131,7 +134,18 @@ private:
 		TransientDetection.Process(yFreq.col(0).abs2(), transientFlagCritical);
 		TransientDetection.ConvertBands.Inverse<bool>(transientFlagCritical, transientFlag);
 		
-		for (auto i = 0; i < D.NBands; i++) { if (transientFlag(i)) { yFreq(i, 1) = yFreq(i, 0); } }
+		for (auto i = 0; i < D.NBands; i++) 
+		{ 
+			if (transientFlag(i)) 
+			{ 
+				float phase = std::arg(yFreq(i, 0)) + D.PhaseOld(i);
+				float mag = std::abs(yFreq(i, 0));
+				yFreq.real()(i, 1) = mag * std::cos(phase);
+				yFreq.imag()(i, 1) = mag * std::sin(phase);
+			} 
+		}
+		D.PhaseOld = yFreq.col(1).arg() - yFreq.col(0).arg();
+
 		FilterbankInverse.Process(yFreq.col(1), yTime);
 	}
 
