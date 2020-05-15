@@ -1,8 +1,9 @@
 #pragma once
+#pragma warning (push)
 #pragma warning (disable : 4127 ) //4127 removes "unused variable" warnings from Eigen
 #define EIGEN_MPL2_ONLY // don't allow LGPL licensed code from Eigen
 #include <Eigen/Dense> // Eigen Library. Potentially redundant since this is also included in InputOutput.h
-#pragma warning (default : 4127) // set "unused variable" warning to default warning level
+#pragma warning (pop)
 #include "InputOutput.h" 
 
 // AsynchronousStreaming is a wrapper using CRTP for an algorithm that derives from Base. 

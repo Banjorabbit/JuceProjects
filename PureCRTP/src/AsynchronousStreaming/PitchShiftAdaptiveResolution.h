@@ -1,7 +1,6 @@
 #pragma once
 #include "../BaseClasses/PureCRTP.h"
 #include "PitchShift.h"
-#include "../Utilities//ApproximationMath.h"
 #include "../Filterbank.h"
 #include "../FrequencyDomain/DetectTransient.h"
 

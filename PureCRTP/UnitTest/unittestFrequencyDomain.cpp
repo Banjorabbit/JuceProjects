@@ -609,8 +609,9 @@ namespace FrequencyDomainTests
 		{
 			DetectTonal tonalDetector;
 			auto c = tonalDetector.GetCoefficients();
-			ArrayXXf input(c.NBands, c.NChannels);
+			ArrayXXcf input(c.NBands, c.NChannels);
 			input.setRandom();
+			input *= 1;
 			Array<bool, Dynamic,Dynamic> output(c.NBands, c.NChannels);
 			auto flag = AlgorithmInterfaceTest<DetectTonal>(input, output);
 			Assert::IsTrue(flag);

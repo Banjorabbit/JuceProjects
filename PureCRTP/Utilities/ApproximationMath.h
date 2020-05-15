@@ -1,6 +1,11 @@
 #pragma once
 #include <cmath>
 #include <algorithm>
+#include <assert.h>
+#pragma warning(push)
+#pragma warning (disable : 4244 ) //4244 removes "conversion" warnings from approximations
+#include "fastonebigheader.h"
+#pragma warning(pop)
 
 const double DOUBLE2_FIX_MAGIC = 6755399441055744.0;   // 0x4338000000000000 = 1.5 *2^52
 
@@ -15,6 +20,17 @@ inline int Real2Int(float x)
 	u.D = x + DOUBLE2_FIX_MAGIC;
 
 	return u.I[0];
+}
+
+inline double fastPow(double a, double b)
+{
+	union {
+		double d;
+		int x[2];
+	} u = { a };
+	u.x[1] = (int)(b * (u.x[1] - 1072632447) + 1072632447);
+	u.x[0] = 0;
+	return u.d;
 }
 
 inline unsigned long NextPow2(unsigned long X)

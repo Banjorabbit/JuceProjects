@@ -2,7 +2,6 @@
 #include "../BaseClasses/PureCRTP.h"
 #include "../FFT.h"
 #include "../DesignFIRNonParametric.h"
-#include "../../Utilities/ApproximationMath.h"
 
 // Nonparametric equalizer
 //
