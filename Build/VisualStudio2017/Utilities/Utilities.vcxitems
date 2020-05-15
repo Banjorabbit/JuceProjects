@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{c60e8384-da04-4b8f-8eed-274150531238}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\ApproximationMath.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\AudioFile.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\pffft.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\ApproximationMath.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\AudioFile.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\fastonebigheader.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\FormatHandling.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\pffft.h" />
+  </ItemGroup>
+</Project>

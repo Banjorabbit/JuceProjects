@@ -1,3 +1,6 @@
-Build/win/x64/
-Build/win/UnitTest/x64/
-Build/win/.vs/
+Build/VisualStudio2017/x64/
+Build/VisualStudio2017/UnitTest/x64/
+Build/VisualStudio2017/.vs/
+Build/VisualStudio2019/x64/
+Build/VisualStudio2019/UnitTest/x64/
+Build/VisualStudio2019/.vs/

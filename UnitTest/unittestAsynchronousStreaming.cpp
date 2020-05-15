@@ -4,6 +4,7 @@
 #include "../src/AsynchronousStreaming/IIR2ndDF.h"
 #include "../src/AsynchronousStreaming/IIR2ndNonLin.h"
 #include "../src/AsynchronousStreaming/IIR2ndTimeVarying.h"
+#include "../src/AsynchronousStreaming/LimiterHard.h"
 #include "../src/AsynchronousStreaming/NonparametricEqualizer.h"
 #include "../src/AsynchronousStreaming/PitchShift.h"
 #include "../src/AsynchronousStreaming/PitchShiftAdaptiveResolution.h"
@@ -286,6 +287,22 @@ namespace AsynchronousStreamingTests
 			ArrayXXf outputLS(bufferSize, cLS.NChannels);
 			sampleRate = cLS.SampleRate;
 			flag = AlgorithmInterfaceStreamingTest<IIR2ndTimeVaryingLowShelfFilterStreaming>(input, outputLS, sampleRate);
+			Assert::IsTrue(flag);
+		}
+	};
+
+	TEST_CLASS(LimiterHardTest)
+	{
+		TEST_METHOD(InterfaceStreaming)
+		{
+			outputLog << "Running LimiterHardTest->InterfaceStreaming.\n";
+			LimiterHard limiter;
+			auto c = limiter.GetCoefficients();
+			ArrayXXf input(c.BufferSize, c.NChannels), output(c.BufferSize, c.NChannels);
+			input.setRandom();
+			input *= 1.25; // setRandom is in interval [-1,1] and LimiterHard is only limiting values larger than +-1.
+			float sampleRate = c.SampleRate;
+			auto flag = AlgorithmInterfaceStreamingTest<LimiterHardStreaming>(input, output, sampleRate);
 			Assert::IsTrue(flag);
 		}
 	};

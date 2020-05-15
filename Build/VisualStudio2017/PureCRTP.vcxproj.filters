@@ -147,6 +147,12 @@
     <ClInclude Include="..\..\src\AsynchronousStreaming\PitchShiftAdaptiveResolution.h">
       <Filter>Header Files\AsynchronousStreaming</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\FilterMinMax.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousStreaming\LimiterHard.h">
+      <Filter>Header Files\AsynchronousStreaming</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\AsynchronousStreaming\VirtualizationHeadphones.cpp">

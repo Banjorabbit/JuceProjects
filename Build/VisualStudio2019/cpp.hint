@@ -1,0 +1,4 @@
+// Hint files help the Visual Studio IDE interpret Visual C++ identifiers
+// such as names of functions and macros.
+// For more information see https://go.microsoft.com/fwlink/?linkid=865984
+#define DEFINEMEMBERALGORITHMS(N, __VA_ARGS__) DEFINEMEMBERSETGETFUNCTIONS(N, Parameters, __VA_ARGS__) DEFINEMEMBERSETGETFUNCTIONS(N, Coefficients, __VA_ARGS__) DEFINEMEMBERSETGETFUNCTIONS(N, Setup, __VA_ARGS__) void ResetMembers() { EVAL(EVAL(APPLYMEMBERMETHOD##N)( EVAL(Reset();), __VA_ARGS__ )) } size_t GetMemberAllocatedMemorySize() const { return EVAL(EVAL(APPLYMEMBERMETHOD##N)(EVAL(GetAllocatedMemorySize() + ), __VA_ARGS__ ))0; }

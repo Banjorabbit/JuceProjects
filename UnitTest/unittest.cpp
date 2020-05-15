@@ -6,6 +6,7 @@
 #include "../src/DesignFIRNonParametric.h"
 #include "../src/FFT.h"
 #include "../src/Filterbank.h"
+#include "../src/FilterMinMax.h"
 #include "../src/FIRMinPhase.h"
 #include "../src/InterpolationCubic.h"
 #include "../src/Upsampling2XCubic.h"
@@ -546,6 +547,158 @@ namespace Algorithms
 			outputLog << "Error: " << error << std::endl;
 			Assert::IsTrue(error < 1e-10f);
 			outputLog << "Test succesful." << std::endl;
+		}
+	};
+
+	TEST_CLASS(FilterMinMaxTest)
+	{
+		TEST_METHOD(InterfaceStreamingMinMax)
+		{
+			StreamingMinMax streaming;
+			auto c = streaming.GetCoefficients();
+			ArrayXXf input(1000, c.NChannels);
+			input.setRandom();
+			ArrayXXf MinValues(1000, c.NChannels);
+			ArrayXXf MaxValues(1000, c.NChannels);
+			O::FilterMinMax output = { MinValues, MaxValues };
+			auto flag = AlgorithmInterfaceTest<StreamingMinMax>(input, output);
+			Assert::IsTrue(flag);
+		}
+
+		TEST_METHOD(InterfaceStreamingMax)
+		{
+			StreamingMax streaming;
+			auto c = streaming.GetCoefficients();
+			ArrayXXf input(1000, c.NChannels);
+			input.setRandom();
+			ArrayXXf output(1000, c.NChannels);
+			auto flag = AlgorithmInterfaceTest<StreamingMax>(input, output);
+			Assert::IsTrue(flag);
+		}
+
+		TEST_METHOD(InterfaceFilterMinMax)
+		{
+			FilterMinMax filter;
+			auto c = filter.GetCoefficients();
+			ArrayXXf input(1000, c.NChannels);
+			input.setRandom();
+			ArrayXXf MinValues(1000, c.NChannels);
+			ArrayXXf MaxValues(1000, c.NChannels);
+			O::FilterMinMax output = { MinValues, MaxValues };
+			auto flag = AlgorithmInterfaceTest<FilterMinMax>(input, output);
+			Assert::IsTrue(flag);
+
+			flag = AlgorithmInterfaceTest<FilterMax>(input, MaxValues);
+			Assert::IsTrue(flag);
+
+			flag = AlgorithmInterfaceTest<FilterMin>(input, MinValues);
+			Assert::IsTrue(flag);
+		}
+
+		TEST_METHOD(CheckCalculationMaxMin)
+		{
+			// streaming algorithms
+			StreamingMinMax streaming;
+			auto c = streaming.GetCoefficients();
+			c.NChannels = 1;
+			c.Length = 5;
+			streaming.Initialize(c);
+
+			StreamingMax sMax;
+			auto cMax = sMax.GetCoefficients();
+			cMax.NChannels = 1;
+			cMax.Length = 5;
+			sMax.Initialize(cMax);
+
+			StreamingMin sMin;
+			auto cMin = sMin.GetCoefficients();
+			cMin.NChannels = 1;
+			cMin.Length = 5;
+			sMin.Initialize(cMin);
+
+			ArrayXf input(20);
+			input.setRandom();
+			ArrayXf minValue(20), maxValue(20), output(20);
+			streaming.Process(input, { minValue, maxValue });
+			sMax.Process(input, output);
+
+			float error = (output - maxValue).abs2().sum();
+			outputLog << "Error: " << error << std::endl;
+			Assert::IsTrue(error == 0);
+
+			sMin.Process(input, output);
+			error = (output - minValue).abs2().sum();
+			outputLog << "Error: " << error << std::endl;
+			Assert::IsTrue(error == 0);
+
+			// filter algorithms
+			FilterMinMax filter;
+			auto cf = filter.GetCoefficients();
+			cf.NChannels = 1;
+			cf.Length = 5;
+			filter.Initialize(cf);
+
+			FilterMax fMax;
+			auto cfMax = fMax.GetCoefficients();
+			cfMax.NChannels = 1;
+			cfMax.Length = 5;
+			fMax.Initialize(cfMax);
+
+			FilterMin fMin;
+			auto cfMin = fMin.GetCoefficients();
+			cfMin.NChannels = 1;
+			cfMin.Length = 5;
+			fMin.Initialize(cfMin);
+
+			filter.Process(input, { minValue, maxValue });
+			fMax.Process(input, output);
+
+			error = (output - maxValue).abs2().sum();
+			outputLog << "Error: " << error << std::endl;
+			Assert::IsTrue(error == 0);
+
+			fMin.Process(input, output);
+			error = (output - minValue).abs2().sum();
+			outputLog << "Error: " << error << std::endl;
+			Assert::IsTrue(error == 0);
+		}
+
+		TEST_METHOD(CheckCalculation)
+		{
+			StreamingMinMax streaming;
+			auto c = streaming.GetCoefficients();
+			c.NChannels = 1;
+			c.Length = 5;
+			streaming.Initialize(c);
+
+			ArrayXf input(20);
+			input << 1.f, 1.2f, 1.5f, 1.8f, 1.4f, 1.15f, 0.6f, 2.1f, 1.3f, 1.05f, 1.9f, 2.2f, 1.3f, 0.7f, 0.3f, 1.4f, 1.7f, 1.8f, 1.41f, 1.2f;
+			ArrayXf minValue(20), maxValue(20), minRef(20), maxRef(20);
+			minRef << 1.f, 1.f, 1.f, 1.f, 1.f, 1.15f, 0.6f, 0.6f, 0.6f, 0.6f, 0.6f, 1.05f, 1.05f, 0.7f, 0.3f, 0.3f, 0.3f, 0.3f, 0.3f, 1.2f;
+			maxRef << 1.f, 1.2f, 1.5f, 1.8f, 1.8f, 1.8f, 1.8f, 2.1f, 2.1f, 2.1f, 2.1f, 2.2f, 2.2f, 2.2f, 2.2f, 2.2f, 1.7f, 1.8f, 1.8f, 1.8f;
+			O::FilterMinMax output = { minValue, maxValue };
+			
+			// use ResetInitializeValue to set start memory
+			streaming.ResetInitialValue(input(0));
+			streaming.Process(input, output);
+			float error = (output.MaxValue - maxRef).abs2().sum() + (output.MinValue - minRef).abs2().sum();
+			outputLog << "Error: " << error << std::endl;
+			Assert::IsTrue(error == 0);
+
+			// repeat with FilterMinMax and check it gives the same values shifted
+			FilterMinMax filter;
+			auto cF = filter.GetCoefficients();
+			cF.NChannels = 1;
+			cF.Length = 5;
+			filter.Initialize(cF);
+			ArrayXf minValue2(20), maxValue2(20);
+			O::FilterMinMax output2 = { minValue2, maxValue2 };
+
+			filter.Process(input, output2);
+
+			error = (output.MaxValue.bottomRows(18) - output2.MaxValue.topRows(18)).abs2().sum() + (output.MinValue.bottomRows(18) - output2.MinValue.topRows(18)).abs2().sum();
+			outputLog << "error: " << error << std::endl;
+			Assert::IsTrue(error == 0);
 		}
 	};
 

@@ -1,8 +1,9 @@
 #pragma once
+#pragma warning (push)
 #pragma warning (disable : 4127 ) //4127 removes "unused variable" warnings from Eigen
 #define EIGEN_MPL2_ONLY // don't allow LGPL licensed code from Eigen
 #include <Eigen/Dense> // Eigen Library.
-#pragma warning (default : 4127) // set "unused variable" warning to default warning level
+#pragma warning (pop)
 
 // author: Kristian Timm Andersen
 
@@ -91,6 +92,7 @@ struct O
 	struct IIR2ndTimeVaryingFilter;
 	struct DesignIIRMinPhase;
 	struct DesignIIRNonParametric;
+	struct FilterMinMax;
 
 	// extract type using partial template specialization: https://stackoverflow.com/questions/301203/extract-c-template-parameters
 	template<typename>
