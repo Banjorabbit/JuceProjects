@@ -101,6 +101,12 @@ void LimiterHardAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 	NChannels = getBusesLayout().getMainInputChannels();
 	SampleRate = static_cast<float>(sampleRate);
 	Limiter.Initialize(BufferSize, NChannels,SampleRate);	
+	auto p = Limiter.Algo.GetParameters();
+	PostGain = p.PostGain;
+	PreGain = p.PreGain;
+	Release = p.ReleaseTConstant;
+	auto c = Limiter.Algo.GetCoefficients();
+	LookAhead = c.LookAheadMS;
 }
 
 void LimiterHardAudioProcessor::releaseResources()

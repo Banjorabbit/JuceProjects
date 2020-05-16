@@ -62,11 +62,13 @@ public:
 	float LookAhead;
 	float PostGain;
 	float PreGain;
+	float Release;
 	void UpdateParameters()
 	{
 		auto p = Limiter.Algo.GetParameters();
 		p.PreGain = PreGain;
 		p.PostGain = PostGain;
+		p.ReleaseTConstant = Release;
 		Limiter.Algo.SetParameters(p);
 	}
 	void UpdateCoefficients()

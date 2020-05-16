@@ -35,6 +35,7 @@ private:
 	Slider PreGain;
 	Slider PostGain;
 	Slider LookAhead;
+	Slider Release;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LimiterHardAudioProcessorEditor)
 };

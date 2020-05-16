@@ -46,6 +46,15 @@ LimiterHardAudioProcessorEditor::LimiterHardAudioProcessorEditor (LimiterHardAud
 	addAndMakeVisible(&LookAhead);
 	LookAhead.setComponentID("LookAhead");
 	LookAhead.addListener(this);
+
+	Release.setSliderStyle(Slider::LinearBarVertical);
+	Release.setRange(.001f, .50f, .001f);
+	Release.setTextValueSuffix(" Release (s)");
+	Release.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
+	Release.setValue(processor.Release);
+	addAndMakeVisible(&Release);
+	Release.setComponentID("Release");
+	Release.addListener(this);
 }
 
 LimiterHardAudioProcessorEditor::~LimiterHardAudioProcessorEditor()
@@ -70,6 +79,7 @@ void LimiterHardAudioProcessorEditor::resized()
 	PreGain.setBounds(40, 30, 20, getHeight() - 60);
 	PostGain.setBounds(80, 30, 20, getHeight() - 60);
 	LookAhead.setBounds(120, 30, 20, getHeight() - 60);
+	Release.setBounds(160, 30, 20, getHeight() - 60);
 }
 
 void LimiterHardAudioProcessorEditor::sliderValueChanged(Slider * slider)
@@ -89,5 +99,10 @@ void LimiterHardAudioProcessorEditor::sliderValueChanged(Slider * slider)
 	{
 		processor.LookAhead = static_cast<float>(slider->getValue());
 		processor.UpdateCoefficients();
+	}
+	else if (name == "Release")
+	{
+		processor.Release = static_cast<float>(slider->getValue());
+		processor.UpdateParameters();
 	}
 }
