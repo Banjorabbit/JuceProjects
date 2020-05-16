@@ -8,7 +8,6 @@ class LimiterHard : public Base<LimiterHard>
 
 public:
 	StreamingMax FindMax;
-	CircBuffer DelayLine;
 	int GetLatencySamples() const { return static_cast<int>(C.LookAheadMS / 1000.f * C.SampleRate); }
 
 private:
@@ -34,43 +33,54 @@ private:
 		float ReleaseUp, AttackDown;
 		int LengthMax, LengthDelay;
 		float Gain, GainAttackSmooth;
+		int size1, size2, size3, size4;
+		Eigen::ArrayXXf DelayLine;
 		void Reset() 
 		{
 			Gain = 1.f;
 			GainAttackSmooth = 1.f;
+			DelayLine.setZero();
 		}
 		bool InitializeMemory(const Coefficients& c) 
 		{
 			LengthMax = static_cast<int>((c.LookAheadMS + c.HoldTimeMS) / 1000.f * c.SampleRate);
 			LengthDelay = static_cast<int>(c.LookAheadMS / 1000.f * c.SampleRate);
+			DelayLine.resize(LengthDelay, c.NChannels);
+			if (c.BufferSize < LengthDelay)
+			{
+				size1 = c.BufferSize;
+				size2 = 0;
+				size3 = LengthDelay - c.BufferSize;
+				size4 = c.BufferSize;
+			}
+			else
+			{
+				size1 = LengthDelay;
+				size2 = c.BufferSize - LengthDelay;
+				size3 = 0;
+				size4 = LengthDelay;
+			}
+			AttackDown = 1.f - expf(-1.f / (c.SampleRate * c.LookAheadMS / 1000.f / 3.f)); // 1st order filter reaches 95% of final value in 3 time constants
 			return true;
 		}
 		size_t GetAllocatedMemorySize() const 
 		{
-			return 0;
+			return DelayLine.GetAllocatedMemorySize();
 		}
 		void OnParameterChange(const Parameters& p, const Coefficients& c)
 		{
 			ReleaseUp = expf(1.f / (c.SampleRate*p.ReleaseTConstant));
-			AttackDown = 1.f - expf(-1.f / (c.SampleRate * c.LookAheadMS / 1000.f / 3.f)); // 1st order filter reaches 95% of final value in 3 time constants
 		}
 	} D;
 
-	DEFINEMEMBERALGORITHMS(2, FindMax, DelayLine);
+	DEFINEMEMBERALGORITHMS(1, FindMax);
 
 	auto InitializeMembers()
 	{
 		auto c = FindMax.GetCoefficients();
 		c.Length = D.LengthMax;
 		c.NChannels = 1;
-		auto flag =  FindMax.Initialize(c);
-
-		auto cDL = DelayLine.GetCoefficients();
-		cDL.DelayLength = D.LengthDelay;
-		cDL.NChannels = C.NChannels;
-		flag &= DelayLine.Initialize(cDL);
-
-		return flag;
+		return FindMax.Initialize(c);
 	}
 
 	void ProcessOn(Input xTime, Output yTime) 
@@ -79,7 +89,10 @@ private:
 		Eigen::ArrayXXf xPre = xTime * P.PreGain;
 
 		// delay xPre with LookAhead
-		DelayLine.Process(xPre, yTime);
+		yTime.topRows(D.size1) = D.DelayLine.topRows(D.size1);
+		yTime.bottomRows(D.size2) = xPre.topRows(D.size2);
+		D.DelayLine.topRows(D.size3) = D.DelayLine.bottomRows(D.size3);
+		D.DelayLine.bottomRows(D.size4) = xPre.bottomRows(D.size4);
 
 		// find max(abs(xTime)) larger than 1 over LookAhead + HoldTime
 		Eigen::ArrayXf xMax(C.BufferSize);

@@ -305,6 +305,48 @@ namespace AsynchronousStreamingTests
 			auto flag = AlgorithmInterfaceStreamingTest<LimiterHardStreaming>(input, output, sampleRate);
 			Assert::IsTrue(flag);
 		}
+
+		// delay input signal and save result to file
+		TEST_METHOD(DelaylinearArray)
+		{
+			LimiterHardStreaming limiter;
+			auto c = limiter.Algo.GetCoefficients();
+			c.BufferSize = 64;
+			c.HoldTimeMS = 7.f;
+			c.NChannels = 2;
+			c.SampleRate = 44100.f;
+			limiter.Initialize(c.BufferSize, c.NChannels, c.SampleRate, c);
+
+			AudioFile<float> audioFile, audioFileRef;
+			audioFile.setNumChannels(c.NChannels);
+			audioFile.setBitDepth(24);
+			audioFile.setSampleRate(static_cast<int>(c.SampleRate));
+			audioFileRef.setNumChannels(c.NChannels);
+			audioFileRef.setBitDepth(24);
+			audioFileRef.setSampleRate(static_cast<int>(c.SampleRate));
+
+			int nBuffers = static_cast<int>(c.SampleRate/c.BufferSize*c.HoldTimeMS*5/1000);
+			ArrayXXf input(nBuffers * c.BufferSize, c.NChannels);
+			ArrayXXf output(c.BufferSize, c.NChannels);
+			input.col(0).setLinSpaced(nBuffers*c.BufferSize, 0, 1);
+			input.col(1).setLinSpaced(nBuffers*c.BufferSize, 0, 1);
+			for (auto i = 0; i < nBuffers; i++)
+			{
+				limiter.Process(input.middleRows(i*c.BufferSize, c.BufferSize), output);
+				for (auto j = 0; j < c.BufferSize; j++)
+				{
+					for (auto channel = 0; channel < c.NChannels; channel++)
+					{
+						audioFile.samples[channel].push_back(output(j, channel));
+						audioFileRef.samples[channel].push_back(input.middleRows(i*c.BufferSize, c.BufferSize)(j, channel));
+					}
+				}
+			}
+			outputLog << "Saving file.\n";
+			audioFile.save("../../../../Temp/LimiterHard.wav", AudioFileFormat::Wave); // truncate to 24bits 
+			audioFileRef.save("../../../../Temp/LimiterHardRef.wav", AudioFileFormat::Wave); // truncate to 24bits 
+
+		}
 	};
 
 	TEST_CLASS(FFTConvolutionTest)
