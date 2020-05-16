@@ -87,7 +87,7 @@ void LimiterHardAudioProcessorEditor::sliderValueChanged(Slider * slider)
 	}
 	else if (name == "LookAhead")
 	{
-		processor.LookAhead = static_cast<int>(slider->getValue());
+		processor.LookAhead = static_cast<float>(slider->getValue());
 		processor.UpdateCoefficients();
 	}
 }

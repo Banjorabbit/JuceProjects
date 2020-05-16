@@ -56,6 +56,9 @@ public:
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+	int BufferSize;
+	float SampleRate;
+	int NChannels;
 	float LookAhead;
 	float PostGain;
 	float PreGain;
@@ -70,7 +73,7 @@ public:
 	{
 		auto c = Limiter.Algo.GetCoefficients();
 		c.LookAheadMS = LookAhead;
-		Limiter.Algo.Initialize(c);
+		Limiter.Initialize(BufferSize,NChannels, SampleRate, c);
 	}
 		
 private:

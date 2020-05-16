@@ -97,8 +97,10 @@ void LimiterHardAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-	int nIn = getNumInputChannels();
-	Limiter.Initialize(samplesPerBlock, nIn, static_cast<float>(sampleRate));	
+	BufferSize = samplesPerBlock;
+	NChannels = getBusesLayout().getMainInputChannels();
+	SampleRate = static_cast<float>(sampleRate);
+	Limiter.Initialize(BufferSize, NChannels,SampleRate);	
 }
 
 void LimiterHardAudioProcessor::releaseResources()
