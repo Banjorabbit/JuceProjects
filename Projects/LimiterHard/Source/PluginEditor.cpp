@@ -18,6 +18,34 @@ LimiterHardAudioProcessorEditor::LimiterHardAudioProcessorEditor (LimiterHardAud
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (400, 300);
+
+	PreGain.setSliderStyle(Slider::LinearBarVertical);
+	PreGain.setRange(.01f, 10.f, .01f);
+	PreGain.setTextValueSuffix(" Pre gain");
+	PreGain.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
+	PreGain.setValue(processor.PreGain);
+	addAndMakeVisible(&PreGain);
+	PreGain.setComponentID("PreGain");
+	PreGain.addListener(this);
+	
+
+	PostGain.setSliderStyle(Slider::LinearBarVertical);
+	PostGain.setRange(.01f, 10.f, .01f);
+	PostGain.setTextValueSuffix(" Post gain");
+	PostGain.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
+	PostGain.setValue(processor.PostGain);
+	addAndMakeVisible(&PostGain);
+	PostGain.setComponentID("PostGain");
+	PostGain.addListener(this);
+
+	LookAhead.setSliderStyle(Slider::LinearBarVertical);
+	LookAhead.setRange(.1f, 20.f, .1f);
+	LookAhead.setTextValueSuffix(" Look ahead (ms)");
+	LookAhead.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
+	LookAhead.setValue(processor.LookAhead);
+	addAndMakeVisible(&LookAhead);
+	LookAhead.setComponentID("LookAhead");
+	LookAhead.addListener(this);
 }
 
 LimiterHardAudioProcessorEditor::~LimiterHardAudioProcessorEditor()
@@ -32,11 +60,34 @@ void LimiterHardAudioProcessorEditor::paint (Graphics& g)
 
     g.setColour (Colours::white);
     g.setFont (15.0f);
-    g.drawFittedText ("Hello World!", getLocalBounds(), Justification::centred, 1);
+    g.drawFittedText ("Limiter!", getLocalBounds(), Justification::centred, 1);
 }
 
 void LimiterHardAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
+	PreGain.setBounds(40, 30, 20, getHeight() - 60);
+	PostGain.setBounds(80, 30, 20, getHeight() - 60);
+	LookAhead.setBounds(120, 30, 20, getHeight() - 60);
+}
+
+void LimiterHardAudioProcessorEditor::sliderValueChanged(Slider * slider)
+{
+	juce::String name = slider->getComponentID();
+	if (name == "PreGain")
+	{
+		processor.PreGain = static_cast<float>(slider->getValue());
+		processor.UpdateParameters();
+	}
+	else if (name == "PostGain")
+	{
+		processor.PostGain = static_cast<float>(slider->getValue());
+		processor.UpdateParameters();
+	}
+	else if (name == "LookAhead")
+	{
+		processor.LookAhead = static_cast<int>(slider->getValue());
+		processor.UpdateCoefficients();
+	}
 }

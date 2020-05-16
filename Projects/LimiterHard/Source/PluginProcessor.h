@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "LimiterHard.h"
 
 //==============================================================================
 /**
@@ -55,7 +56,25 @@ public:
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+	float LookAhead;
+	float PostGain;
+	float PreGain;
+	void UpdateParameters()
+	{
+		auto p = Limiter.Algo.GetParameters();
+		p.PreGain = PreGain;
+		p.PostGain = PostGain;
+		Limiter.Algo.SetParameters(p);
+	}
+	void UpdateCoefficients()
+	{
+		auto c = Limiter.Algo.GetCoefficients();
+		c.LookAheadMS = LookAhead;
+		Limiter.Algo.Initialize(c);
+	}
+		
 private:
+	LimiterHardStreaming Limiter;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LimiterHardAudioProcessor)
 };

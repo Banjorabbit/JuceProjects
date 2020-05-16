@@ -16,7 +16,7 @@
 //==============================================================================
 /**
 */
-class LimiterHardAudioProcessorEditor  : public AudioProcessorEditor
+class LimiterHardAudioProcessorEditor  : public AudioProcessorEditor, private Slider::Listener
 {
 public:
     LimiterHardAudioProcessorEditor (LimiterHardAudioProcessor&);
@@ -30,6 +30,11 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     LimiterHardAudioProcessor& processor;
+
+	void sliderValueChanged(Slider *slider) override;
+	Slider PreGain;
+	Slider PostGain;
+	Slider LookAhead;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LimiterHardAudioProcessorEditor)
 };
