@@ -46,11 +46,11 @@ private:
 	} D;
 
 	inline void IncrementIndex() { D.IndexStart++; if (D.IndexStart >= C.DelayLength) { D.IndexStart = 0; } }
-	inline void IncrementIndex(const int increment) { D.IndexStart += increment; if (D.IndexStart >= C.DelayLength) { D.IndexStart -= C.DelayLength; } }
+	inline void IncrementIndex(const int increment) { D.IndexStart += increment; while (D.IndexStart >= C.DelayLength) { D.IndexStart -= C.DelayLength; } }
 	inline void DecrementIndex() { D.IndexStart--; if (D.IndexStart < 0) { D.IndexStart = C.DelayLength - 1; } }
-	inline void DecrementIndex(const int decrement) { D.IndexStart -= decrement; if (D.IndexStart < 0) { D.IndexStart += C.DelayLength; } }
+	inline void DecrementIndex(const int decrement) { D.IndexStart -= decrement; while (D.IndexStart < 0) { D.IndexStart += C.DelayLength; } }
 	inline void IncrementFIFO() { D.IndexFIFO++; if (D.IndexFIFO >= C.DelayLength) { D.IndexFIFO = 0; } }
-	inline void IncrementFIFO(const int increment) { D.IndexFIFO += increment; if (D.IndexFIFO >= C.DelayLength) { D.IndexFIFO -= C.DelayLength; } }
+	inline void IncrementFIFO(const int increment) { D.IndexFIFO += increment; while (D.IndexFIFO >= C.DelayLength) { D.IndexFIFO -= C.DelayLength; } }
 
 
 	// NOTE: Alternative to ProcessOn. Currently not used.
@@ -70,14 +70,17 @@ private:
 
 	void ProcessOn(Input xTime, Output yTime)
 	{
+		const auto SizeIn = static_cast<int>(xTime.rows());
 		IncrementIndex();
-		const auto rowsFirst = std::min(C.DelayLength - D.IndexStart, static_cast<int>(xTime.rows()));
-		const auto rowsSecond = std::max(0, static_cast<int>(xTime.rows()) - C.DelayLength + D.IndexStart);
+		const auto rowsFirst = std::min(C.DelayLength - D.IndexStart, SizeIn);
+		const auto rowsSecond = std::min(std::max(0, SizeIn - C.DelayLength + D.IndexStart), C.DelayLength - rowsFirst);
+		const auto rowsThird = std::max(SizeIn - rowsFirst - rowsSecond, 0);
 		yTime.topRows(rowsFirst) = D.DelayLine.middleRows(D.IndexStart, rowsFirst);
-		yTime.bottomRows(rowsSecond) = D.DelayLine.topRows(rowsSecond);
-		D.DelayLine.middleRows(D.IndexStart, rowsFirst) = xTime.topRows(rowsFirst);
+		yTime.middleRows(rowsFirst, rowsSecond) = D.DelayLine.topRows(rowsSecond);
+		yTime.bottomRows(rowsThird) = xTime.topRows(rowsThird);
+		D.DelayLine.middleRows(D.IndexStart, rowsFirst) = xTime.middleRows(rowsThird, rowsFirst);
 		D.DelayLine.topRows(rowsSecond) = xTime.bottomRows(rowsSecond);
-		IncrementIndex(static_cast<int>(xTime.rows()) - 1);
+		IncrementIndex(SizeIn - 1);
 	}
 
 	void ProcessOff(Input xTime, Output yTime) { yTime = xTime; }
