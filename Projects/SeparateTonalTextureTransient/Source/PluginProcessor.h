@@ -60,7 +60,14 @@ public:
 	void UpdateParameters(const SelectOutput& outputSelector)
 	{
 		auto p = Separator.GetParameters();
-		p.OutputSelector = outputSelector;
+		switch (outputSelector)
+		{
+		case TONAL: p.OutputSelector = p.TONAL;
+		case TEXTURE: p.OutputSelector = p.TEXTURE;
+		case TRANSIENT: p.OutputSelector = p.TRANSIENT;
+		case SUM: p.OutputSelector = p.SUM;
+		}
+		
 		Separator.SetParameters(p);
 	}
 private:
