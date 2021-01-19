@@ -151,17 +151,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\AsynchronousStreaming\FFTConvolution.h" />
-    <ClInclude Include="..\..\src\AsynchronousStreaming\IIR2ndDF.h" />
-    <ClInclude Include="..\..\src\AsynchronousStreaming\IIR2ndTimeVarying.h" />
-    <ClInclude Include="..\..\src\AsynchronousStreaming\IIR2ndNonLin.h" />
-    <ClInclude Include="..\..\src\AsynchronousStreaming\LimiterHard.h" />
-    <ClInclude Include="..\..\src\AsynchronousStreaming\NonparametricEqualizer.h" />
-    <ClInclude Include="..\..\src\AsynchronousStreaming\PipelinePreProcessing.h" />
-    <ClInclude Include="..\..\src\AsynchronousStreaming\PitchShift.h" />
-    <ClInclude Include="..\..\src\AsynchronousStreaming\PitchShiftAdaptiveResolution.h" />
-    <ClInclude Include="..\..\src\AsynchronousStreaming\VirtualizationHeadphones.h" />
-    <ClInclude Include="..\..\src\BaseClasses\AsynchronousStreaming.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\Distortion.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\FFTConvolution.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\IIR2ndDF.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\IIR2ndNonLin.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\IIR2ndTimeVarying.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\LimiterHard.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\NonparametricEqualizer.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\PipelinePreProcessing.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\PitchShift.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\PitchShiftAdaptiveResolution.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\PitchShiftPhaseLocking.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\SeparateTonal.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\SeparateTonalTextureTransient.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\SeparateTransient.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\VirtualizationHeadphones.h" />
+    <ClInclude Include="..\..\src\BaseClasses\AsynchronousBase.h" />
     <ClInclude Include="..\..\src\BaseClasses\Base.h" />
     <ClInclude Include="..\..\src\BaseClasses\ConstrainedType.h" />
     <ClInclude Include="..\..\src\BaseClasses\GetSizeOfEigen.h" />
@@ -183,8 +188,11 @@
     <ClInclude Include="..\..\src\FrequencyDomain\CriticalBands.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\DetectTransient.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerMomentum.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerNLMS.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerToeplitz.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\EchoSuppressionCovariance.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\GainCalculation.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\InterpolateTonal.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\InterpolationTemporal.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\LoudnessModel.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\MinPhaseSpectrum.h" />
@@ -193,10 +201,13 @@
     <ClInclude Include="..\..\src\FrequencyDomain\DetectTonal.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\DetectVoiceActivation.h" />
     <ClInclude Include="..\..\src\InterpolationCubic.h" />
+    <ClInclude Include="..\..\src\SpectralMass.h" />
+    <ClInclude Include="..\..\src\StateVariableFilter.h" />
+    <ClInclude Include="..\..\src\ToeplitzSolver.h" />
     <ClInclude Include="..\..\src\Upsampling2XCubic.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\AsynchronousStreaming\VirtualizationHeadphones.cpp" />
+    <ClCompile Include="..\..\src\AsynchronousBase\VirtualizationHeadphones.cpp" />
     <ClCompile Include="..\..\src\FrequencyDomain\CriticalBands.cpp" />
   </ItemGroup>
   <ItemGroup>

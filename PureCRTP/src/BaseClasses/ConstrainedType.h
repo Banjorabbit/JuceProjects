@@ -1,3 +1,4 @@
+#pragma once
 #include <limits>
 
 // Define ConstrainedType, which defines a min/max limit for the templated type.

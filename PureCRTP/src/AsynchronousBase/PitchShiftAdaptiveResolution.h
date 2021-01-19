@@ -4,7 +4,7 @@
 #include "../Filterbank.h"
 #include "../FrequencyDomain/DetectTransient.h"
 
-class PitchShiftAdaptiveResolution : public Base<PitchShiftAdaptiveResolution>
+class PitchShiftAdaptiveResolution : public AsynchronousBase<PitchShiftAdaptiveResolution>
 {
 	friend Base<PitchShiftAdaptiveResolution>;
 
@@ -17,13 +17,44 @@ public:
 
 	// Latency is Long Pitchshift delay + 1 filterbank delay
 	int GetLatencySamples() const { return PitchShiftLongFrame.GetLatencySamples() + C.BufferSize * 3; }
+
+	auto GetAsynchronousCoefficients(const std::vector<int> bufferSizesSuggested) const
+	{
+		Coefficients c = C;
+		auto bufferSizes = bufferSizesSuggested;
+
+		// start suggestion should be size 2^x close to 3ms
+		int goodSize = static_cast<int>(powf(2, std::round(std::log2(.003f*c.SampleRate))));
+		if (static_cast<float>(bufferSizesSuggested[0]) / goodSize < 0.666f || static_cast<float>(bufferSizesSuggested[0]) / goodSize > 1.5f)
+		{
+			bufferSizes.insert(bufferSizes.begin(), goodSize);
+		}
+		else
+		{
+			bufferSizes.insert(bufferSizes.begin() + 1, goodSize);
+		}
+
+		// return with first value that is a valid size
+		for (auto& size : bufferSizes)
+		{
+			if (FFTReal::IsFFTSizeValid(size * 4))
+			{
+				c.BufferSize = size;
+				return c;// return with first match
+			}
+		}
+		return c; // failed to find valid BufferSize so use default
+	}
+
 private:
 
 	struct Coefficients 
 	{
 		float SampleRate = 44.1e3f;
 		int BufferSize = 128;
+		ConstrainedType<int> NChannelsIn = { 1, 1, 1 };
 		int LongFrameFactor = 5;
+		AsynchronousBufferType AsynchronousBuffer = VARIABLE_SIZE;
 	} C;
 	
 	struct Parameters 
@@ -87,7 +118,7 @@ private:
 		sFilterbank.Coefficients.BufferSize = C.BufferSize;
 		sFilterbank.Coefficients.FFTSize = D.FFTSize;
 		sFilterbank.Coefficients.FrameSize = D.FFTSize;
-		sFilterbank.Coefficients.NChannels = 1; // change when more channels are supported
+		sFilterbank.Coefficients.NChannels = C.NChannelsIn; 
 		sFilterbank.Parameters.WindowType = sFilterbank.Parameters.HannWindow;
 		flag &= Filterbank.Initialize(sFilterbank);
 
@@ -95,7 +126,7 @@ private:
 		sFilterbankInverse.Coefficients.BufferSize = C.BufferSize;
 		sFilterbankInverse.Coefficients.FFTSize = D.FFTSize;
 		sFilterbankInverse.Coefficients.FrameSize = D.FFTSize;
-		sFilterbankInverse.Coefficients.NChannels = 1; // change when more channels are supported
+		sFilterbankInverse.Coefficients.NChannels = C.NChannelsIn; 
 		sFilterbankInverse.Parameters.WindowType = sFilterbankInverse.Parameters.HannWindow;
 		flag &= FilterbankInverse.Initialize(sFilterbankInverse);
 
@@ -155,43 +186,4 @@ private:
 	}
 
 	void ProcessOff(Input xTime, Output yTime) { yTime.setZero(); }
-};
-
-
-class PitchShiftAdaptiveResolutionStreaming : public AsynchronousStreaming<PitchShiftAdaptiveResolutionStreaming, PitchShiftAdaptiveResolution>
-{
-	friend AsynchronousStreaming<PitchShiftAdaptiveResolutionStreaming, PitchShiftAdaptiveResolution>;
-
-	// latency is equal to reset-value of D.IndexOut 
-	int CalculateLatencySamples() const { return Algo.GetLatencySamples(); }
-	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
-
-	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
-	{
-		if (nChannels > 1) { return -1; }
-
-		// start suggestion should be size 2^x close to 3ms
-		int goodSize = static_cast<int>(powf(2, std::round(std::log2(.003f*sampleRate))));
-		if (static_cast<float>(bufferSizesSuggested[0]) / goodSize < 0.666f || static_cast<float>(bufferSizesSuggested[0]) / goodSize > 1.5f)
-		{
-			bufferSizesSuggested.insert(bufferSizesSuggested.begin(), goodSize);
-		}
-		else
-		{
-			bufferSizesSuggested.insert(bufferSizesSuggested.begin() + 1, goodSize);
-		}
-		bufferSizesSuggested.push_back(c.BufferSize);
-
-		// return with first value that is a valid size
-		for (auto& size : bufferSizesSuggested)
-		{
-			if (FFTReal::IsFFTSizeValid(size * 4))
-			{
-				c.BufferSize = size;
-				return size;
-			}
-		}
-		// failed to set up correctly
-		return -1;
-	}
 };

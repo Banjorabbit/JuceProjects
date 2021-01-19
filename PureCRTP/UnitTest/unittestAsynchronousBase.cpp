@@ -1,14 +1,19 @@
 #include "unittest.h"
-#include "../src/AsynchronousStreaming/PipelinePreProcessing.h"
-#include "../src/AsynchronousStreaming/FFTConvolution.h"
-#include "../src/AsynchronousStreaming/IIR2ndDF.h"
-#include "../src/AsynchronousStreaming/IIR2ndNonLin.h"
-#include "../src/AsynchronousStreaming/IIR2ndTimeVarying.h"
-#include "../src/AsynchronousStreaming/LimiterHard.h"
-#include "../src/AsynchronousStreaming/NonparametricEqualizer.h"
-#include "../src/AsynchronousStreaming/PitchShift.h"
-#include "../src/AsynchronousStreaming/PitchShiftAdaptiveResolution.h"
-#include "../src/AsynchronousStreaming/VirtualizationHeadphones.h"
+#include "../src/AsynchronousBase/Distortion.h"
+#include "../src/AsynchronousBase/FFTConvolution.h"
+#include "../src/AsynchronousBase/IIR2ndDF.h"
+#include "../src/AsynchronousBase/IIR2ndNonLin.h"
+#include "../src/AsynchronousBase/IIR2ndTimeVarying.h"
+#include "../src/AsynchronousBase/LimiterHard.h"
+#include "../src/AsynchronousBase/NonparametricEqualizer.h"
+#include "../src/AsynchronousBase/PipelinePreProcessing.h"
+#include "../src/AsynchronousBase/PitchShift.h"
+#include "../src/AsynchronousBase/PitchShiftAdaptiveResolution.h"
+#include "../src/AsynchronousBase/PitchShiftPhaseLocking.h"
+#include "../src/AsynchronousBase/SeparateTonal.h"
+#include "../src/AsynchronousBase/SeparateTonalTextureTransient.h"
+#include "../src/AsynchronousBase/SeparateTransient.h"
+#include "../src/AsynchronousBase/VirtualizationHeadphones.h"
 #include "../Utilities/AudioFile.h"
 #include "../Utilities/FormatHandling.h"
 #include "../Utilities/pffft.h"
@@ -16,58 +21,50 @@
 using namespace InterfaceTests;
 
 
-namespace AsynchronousStreamingTests
+namespace AsynchronousBaseTests
 {
 	LoggerOutput outputLog;
 
+	TEST_CLASS(DistortionTest)
+	{
+		TEST_METHOD(InterfaceAsynchronous)
+		{
+			outputLog << "Running DistortionTest->InterfaceAsynchronous.\n";
+			auto flag = AlgorithmInterfaceAsynchronousTest<Distortion5thOrderOdd>();
+			Assert::IsTrue(flag);
+		}
+	};
+
 	TEST_CLASS(NonparametricEqualizerTest)
 	{
-		TEST_METHOD(InterfaceStreaming)
+		TEST_METHOD(InterfaceAsynchronous)
 		{
-			outputLog << "Running NonparametricEqualizerTest->InterfaceStreaming.\n";
-			NonparametricEqualizer equalizer;
-			auto c = equalizer.GetCoefficients();
-			auto p = equalizer.GetParameters();
-			ArrayXXf input(c.BufferSize, c.NChannels);
-			input.setRandom();
+			outputLog << "Running NonparametricEqualizerTest->InterfaceAsynchronous.\n";
 			ArrayXf frequencies(5);
 			ArrayXf gaindB(5);
 			frequencies << 80, 500, 1000, 2400, 4000;
 			gaindB << 5, 10, -10, 0, 7;
 			I::NonparametricEqualizerPersistent inputX = { frequencies, gaindB };
-			ArrayXXf output(c.BufferSize, c.NChannels);
-			float sampleRate = c.SampleRate;
-			auto flag = AlgorithmInterfaceStreamingTest<NonparametricEqualizerStreaming>(input, output, sampleRate, inputX);
+			auto flag = AlgorithmInterfaceAsynchronousTest<NonparametricEqualizer>(inputX);
 			Assert::IsTrue(flag);
 		}
 	};
 
 	TEST_CLASS(PipelinePreProcessingTest)
 	{
-		TEST_METHOD(InterfaceStreaming)
+		TEST_METHOD(InterfaceAsynchronous)
 		{
 			outputLog << "Running PipelinePreProcessingTest->Interface.\n";
-			PipelinePreProcessing PPP;
-			auto c = PPP.GetCoefficients();
-			ArrayXXf input(c.BufferSize, c.NChannels);
-			input.setRandom();
-			ArrayXf output(c.BufferSize);
-			auto flag = AlgorithmInterfaceStreamingTest<PipelinePreProcessingStreaming>(input, output, c.SampleRate);
+			auto flag = AlgorithmInterfaceAsynchronousTest<PipelinePreProcessing>();
 			Assert::IsTrue(flag);
 		}
 	};
 
 	TEST_CLASS(PitchShiftTest)
 	{
-		TEST_METHOD(InterfaceStreaming)
+		TEST_METHOD(InterfaceAsynchronous)
 		{
-			PitchShift timeStretch;
-			auto c = timeStretch.GetCoefficients();
-			ArrayXXf input(c.BufferSize, 1);
-			input.setRandom();
-			ArrayXXf output(c.BufferSize, 1);
-			float sampleRate = 48e3f;
-			auto flag = AlgorithmInterfaceStreamingTest<PitchShiftStreaming>(input, output, sampleRate);
+			auto flag = AlgorithmInterfaceAsynchronousTest<PitchShift>();
 			Assert::IsTrue(flag);
 		}
 
@@ -75,45 +72,94 @@ namespace AsynchronousStreamingTests
 
 	TEST_CLASS(PitchShiftAdaptiveResolutionTest)
 	{
-		TEST_METHOD(InterfaceStreaming)
+		TEST_METHOD(InterfaceAsynchronous)
 		{
-			PitchShiftAdaptiveResolution timeStretch;
-			auto c = timeStretch.GetCoefficients();
-			ArrayXXf input(c.BufferSize, 1);
-			input.setRandom();
-			ArrayXXf output(c.BufferSize, 1);
-			auto sampleRate = 48e3f;
-			auto flag = AlgorithmInterfaceStreamingTest<PitchShiftAdaptiveResolutionStreaming>(input, output, sampleRate);
+			auto flag = AlgorithmInterfaceAsynchronousTest<PitchShiftAdaptiveResolution>();
 			Assert::IsTrue(flag);
 		}
 
 	};
 
+	TEST_CLASS(PitchShiftPhaseLockingTest)
+	{
+		TEST_METHOD(InterfaceAsynchronous)
+		{
+			auto flag = AlgorithmInterfaceAsynchronousTest<PitchShiftPhaseLocking>();
+			Assert::IsTrue(flag);
+		}
+
+	};
+
+	TEST_CLASS(SeparateTonalTest)
+	{
+		TEST_METHOD(InterfaceAsynchronous)
+		{
+			auto flag = AlgorithmInterfaceAsynchronousTest<SeparateTonal>();
+			Assert::IsTrue(flag);
+		}
+
+		TEST_METHOD(LatencyTest)
+		{
+			SeparateTonal tonalSeparator;
+			auto c = tonalSeparator.GetCoefficients();
+			c.NChannelsIn = 1;
+			tonalSeparator.Initialize(c);
+			auto latency = tonalSeparator.GetLatencySamples();
+			
+			ArrayXf input(c.BufferSize * 20), output(c.BufferSize * 20);
+			input.setRandom();
+			for (auto i = 0; i < 20; i++)
+			{
+				tonalSeparator.Process(input.segment(i*c.BufferSize, c.BufferSize), output.segment(i*c.BufferSize, c.BufferSize));
+			}
+			
+			outputLog << "Latency: " << latency << "\n";
+			outputLog << "Diff: " << (output.tail(20*c.BufferSize - latency) - input.head(20*c.BufferSize - latency)).abs2().sum() / input.head(20*c.BufferSize - latency).abs2().sum() << std::endl;
+		}
+	};
+
+	TEST_CLASS(SeparateTonalTextureTransientTest)
+	{
+		TEST_METHOD(InterfaceAsynchronous)
+		{
+			auto flag = AlgorithmInterfaceAsynchronousTest<SeparateTonalTextureTransient>();
+			Assert::IsTrue(flag);
+		}
+	};
+
+	TEST_CLASS(SeparateTransientTest)
+	{
+		TEST_METHOD(InterfaceAsynchronous)
+		{
+			auto flag = AlgorithmInterfaceAsynchronousTest<SeparateTransient>();
+			Assert::IsTrue(flag);
+		}
+	};
+
 	TEST_CLASS(IIR2ndDFTest)
 	{
-		TEST_METHOD(InterfaceStreaming2ndCascaded)
+		TEST_METHOD(InterfaceAsynchronous2ndCascaded)
 		{
 			IIR2ndCascaded filter;
 			auto c = filter.GetCoefficients();
 			ArrayXXf sos(c.Nsos, 6);
 			sos.setRandom();
-			ArrayXXf input(128, c.NChannels), output(128, c.NChannels);
-			input.setRandom();
-			float sampleRate = 16e3f;
-			AlgorithmInterfaceStreamingTest<IIR2ndCascadedStreaming>(input, output, sampleRate, sos);
+			AlgorithmInterfaceAsynchronousTest<IIR2ndCascaded>(sos);
 		}
 
 		TEST_METHOD(CheckCalculationIIR2ndCascaded)
 		{
 			IIR2ndCascaded filter;
+			int bufferSize = 16;
 			auto c = filter.GetCoefficients();
-			c.NChannels = 1;
+			c.NChannelsIn = 1;
 			c.Nsos = 3;
+			c.BufferSize = bufferSize;
 			filter.Initialize(c);
 			ArrayXXf sos(c.Nsos, 6);
 			sos << 1.f, 1.f, -1.f, 1.f, .2f, -.2f, 1.f, -1.f, -1.f, 1.f, .3f, -.4f, 1.f, 2.f, 1.f, 1.f, -.1f, .05f;
 			filter.SetPersistentInput(sos);
-			ArrayXf input(16), output(16), outputRef(16);
+			ArrayXf input(bufferSize), output(bufferSize), outputRef(bufferSize);
 			input.setZero();
 			input(0) = 1.f;
 			outputRef << 1.000000000000000f, 1.600000000000000f, -2.100000000000000f, -4.234999999999999f, -1.409400000000000f, 0.056560000000000f, 0.118665000000000f, 0.142948000000000f, 0.049654860000000f, 0.056578021000000f, 0.011437689000000f, 0.020982221200000f, -0.000422592759000f, 0.008579439073600f, -0.002496334514100f, 0.004145097177685f;
@@ -122,25 +168,23 @@ namespace AsynchronousStreamingTests
 			outputLog << "error: " << error << std::endl;
 			Assert::IsTrue(error < 1e-10f);
 		}
-		TEST_METHOD(InterfaceStreaming2ndOrder)
+		TEST_METHOD(InterfaceAsynchronous2ndOrder)
 		{
-			outputLog << "Running IIRFiltersTest->InterfaceStreaming2ndOrder.\n";
-			IIR2ndDF2 filter;
-			auto c = filter.GetCoefficients();
-			auto bufferSize = 128;
-			ArrayXXf input(bufferSize, c.NChannels), output(bufferSize, c.NChannels);
-			input.setRandom();
-			float sampleRate = c.SampleRate;
-			auto flag = AlgorithmInterfaceStreamingTest<IIR2ndDF2Streaming>(input, output, sampleRate);
+			outputLog << "Running IIRFiltersTest->InterfaceAsynchronous2ndOrder.\n";
+			auto flag = AlgorithmInterfaceAsynchronousTest<IIR2ndDF2>();
 			Assert::IsTrue(flag);
 
-			IIR2ndDF2Transposed filterII;
-			c = filterII.GetCoefficients();
-			input.resize(bufferSize, c.NChannels);
-			output.resize(bufferSize, c.NChannels);
-			input.setRandom();
-			sampleRate = c.SampleRate;
-			flag = AlgorithmInterfaceStreamingTest<IIR2ndDF2TransposedStreaming>(input, output, sampleRate);
+			flag = AlgorithmInterfaceAsynchronousTest<IIR2ndDF2Transposed>();
+			Assert::IsTrue(flag);
+		}
+
+		TEST_METHOD(InterfaceAsynchronous2ndOrderComplex)
+		{
+			outputLog << "Running IIRFiltersTest->InterfaceAsynchronous2ndDF2Complex.\n";
+			auto flag = AlgorithmInterfaceAsynchronousTest<IIR2ndDF2Complex>();
+			Assert::IsTrue(flag);
+
+			flag = AlgorithmInterfaceAsynchronousTest<IIR2ndDF2TransposedComplex>();
 			Assert::IsTrue(flag);
 		}
 
@@ -160,7 +204,7 @@ namespace AsynchronousStreamingTests
 			filterII.SetParameters(pII);
 			auto bufferSize = 128;
 
-			ArrayXXf input(bufferSize, c.NChannels), outputI(bufferSize, c.NChannels), outputII(bufferSize, c.NChannels);
+			ArrayXXf input(bufferSize, c.NChannelsIn), outputI(bufferSize, c.NChannelsIn), outputII(bufferSize, c.NChannelsIn);
 			auto NFrames = static_cast<int>(1 * c.SampleRate / bufferSize);
 			for (auto i = 0;i < NFrames;i++)
 			{
@@ -175,31 +219,63 @@ namespace AsynchronousStreamingTests
 
 	TEST_CLASS(IIR2ndNonLinTest)
 	{
-		TEST_METHOD(InterfaceStreamingNonLinLowpass)
+		TEST_METHOD(AsynchronousBaseTest)
 		{
-			outputLog << "Running IIRFiltersTest->InterfaceStreamingNonLinLowpass.\n";
 			IIR2ndNonLinLowpass filter;
+			outputLog << "Un-initialized.\n";
+			outputLog << "GetInitializedAsynchronous(): " << filter.GetInitializedAsynchronous() << "\n";
+			outputLog << "GetBufferSizeExternal(): " << filter.GetBufferSizeExternal() << "\n";
+			outputLog << "GetSynchronousProcessing(): " << filter.GetSynchronousProcessing() << "\n";
+			outputLog << "GetNChannelsIn(): " << filter.GetNChannelsIn() << "\n";
+			outputLog << "GetNChannelsOut(): " << filter.GetNChannelsOut() << "\n";
+			outputLog << "GetBufferSize(): " << filter.GetBufferSize() << "\n";
+			outputLog << "GetLatencySamples(): " << filter.GetLatencySamples() << "\n";
+
+			filter.Initialize();
+			outputLog << "Initialized.\n";
+			outputLog << "GetInitializedAsynchronous(): " << filter.GetInitializedAsynchronous() << "\n";
+			outputLog << "GetBufferSizeExternal(): " << filter.GetBufferSizeExternal() << "\n";
+			outputLog << "GetSynchronousProcessing(): " << filter.GetSynchronousProcessing() << "\n";
+			outputLog << "GetNChannelsIn(): " << filter.GetNChannelsIn() << "\n";
+			outputLog << "GetNChannelsOut(): " << filter.GetNChannelsOut() << "\n";
+			outputLog << "GetBufferSize(): " << filter.GetBufferSize() << "\n";
+			outputLog << "GetLatencySamples(): " << filter.GetLatencySamples() << "\n";
+
+			filter.InitializeAsynchronous(11);
+			outputLog << "Initialized Asynchronous.\n";
+			outputLog << "GetInitializedAsynchronous(): " << filter.GetInitializedAsynchronous() << "\n";
+			outputLog << "GetBufferSizeExternal(): " << filter.GetBufferSizeExternal() << "\n";
+			outputLog << "GetSynchronousProcessing(): " << filter.GetSynchronousProcessing() << "\n";
+			outputLog << "GetNChannelsIn(): " << filter.GetNChannelsIn() << "\n";
+			outputLog << "GetNChannelsOut(): " << filter.GetNChannelsOut() << "\n";
+			outputLog << "GetBufferSize(): " << filter.GetBufferSize() << "\n";
+			outputLog << "GetLatencySamples(): " << filter.GetLatencySamples() << "\n";
+
 			auto c = filter.GetCoefficients();
-			auto bufferSize = 128;
-			ArrayXXf input(bufferSize, c.NChannels), output(bufferSize, c.NChannels);
-			input.setRandom();
-			output.setZero();
-			float sampleRate = c.SampleRate;
-			auto flag = AlgorithmInterfaceStreamingTest<IIR2ndNonLinLowpassStreaming>(input, output, sampleRate);
+			c.BufferSize = 256;
+			filter.InitializeAsynchronous(c, 128);
+			outputLog << "Initialized Asynchronous with BufferSize=256.\n";
+			outputLog << "GetInitializedAsynchronous(): " << filter.GetInitializedAsynchronous() << "\n";
+			outputLog << "GetBufferSizeExternal(): " << filter.GetBufferSizeExternal() << "\n";
+			outputLog << "GetSynchronousProcessing(): " << filter.GetSynchronousProcessing() << "\n";
+			outputLog << "GetNChannelsIn(): " << filter.GetNChannelsIn() << "\n";
+			outputLog << "GetNChannelsOut(): " << filter.GetNChannelsOut() << "\n";
+			outputLog << "GetBufferSize(): " << filter.GetBufferSize() << "\n";
+			outputLog << "GetLatencySamples(): " << filter.GetLatencySamples() << "\n";
+
+			outputLog << std::endl;
+		}
+		TEST_METHOD(InterfaceAsynchronousNonLinLowpass)
+		{
+			outputLog << "Running IIRFiltersTest->InterfaceAsynchronousNonLinLowpass." << std::endl;
+			auto flag = AlgorithmInterfaceAsynchronousTest<IIR2ndNonLinLowpass>();
 			Assert::IsTrue(flag);
 		}
 
-		TEST_METHOD(InterfaceStreamingNonLinBandpass)
+		TEST_METHOD(InterfaceAsynchronousNonLinBandpass)
 		{
-			outputLog << "Running IIRFiltersTest->InterfaceStreamingNonLinBandpass.\n";
-			IIR2ndNonLinBandpass filter;
-			auto c = filter.GetCoefficients();
-			auto bufferSize = 128;
-			ArrayXXf input(bufferSize, c.NChannels), output(bufferSize, c.NChannels);
-			input.setRandom();
-			output.setZero();
-			float sampleRate = c.SampleRate;
-			auto flag = AlgorithmInterfaceStreamingTest<IIR2ndNonLinBandpassStreaming>(input, output, sampleRate);
+			outputLog << "Running IIRFiltersTest->InterfaceAsynchronousNonLinBandpass.\n";
+			auto flag = AlgorithmInterfaceAsynchronousTest<IIR2ndNonLinBandpass>();
 			Assert::IsTrue(flag);
 		}
 
@@ -208,9 +284,9 @@ namespace AsynchronousStreamingTests
 			IIR2ndNonLinLowpass filter;
 			auto s = filter.GetSetup();
 			int bufferSize = 5;
-			float sampleRate = 44100.f;
-			s.Coefficients.SampleRate = sampleRate;
-			s.Coefficients.NChannels = 1;
+			s.Coefficients.SampleRate = 44100.f;
+			s.Coefficients.NChannelsIn = 1;
+			s.Coefficients.BufferSize = bufferSize;
 			s.Parameters.Resonance = 4.f;
 			s.Parameters.Cutoff = 1000.f;
 			filter.SetSetup(s);
@@ -228,106 +304,62 @@ namespace AsynchronousStreamingTests
 
 	TEST_CLASS(IIR2ndTimeVaryingTest)
 	{
-		TEST_METHOD(InterfaceStreamingTimeVarying)
+		TEST_METHOD(InterfaceAsynchronousTimeVarying)
 		{
-			outputLog << "Running IIRFiltersTest->InterfaceTimeStreamingVarying.\n";
-			IIR2ndTimeVaryingFilter filter;
-			auto c = filter.GetCoefficients();
-			auto bufferSize = 128;
-			ArrayXXf input(bufferSize, c.NChannels), BandPass(bufferSize, c.NChannels), HighPass(bufferSize, c.NChannels), LowPass(bufferSize, c.NChannels);
-			input.setRandom();
-			O::IIR2ndTimeVaryingFilter output = { HighPass, LowPass, BandPass };
-			auto flag = AlgorithmInterfaceTest<IIR2ndTimeVaryingFilter>(input, output);
+			outputLog << "Running IIRFiltersTest->InterfaceAsynchronousTimeVarying.\n";
+			auto flag = AlgorithmInterfaceAsynchronousTest<IIR2ndTimeVaryingLowPassFilter>();
 			Assert::IsTrue(flag);
 
-			IIR2ndTimeVaryingLowPassFilter filterLowPass;
-			auto cLP = filterLowPass.GetCoefficients();
-			ArrayXXf outputLP(bufferSize, cLP.NChannels);
-			float sampleRate = cLP.SampleRate;
-			flag = AlgorithmInterfaceStreamingTest<IIR2ndTimeVaryingLowPassFilterStreaming>(input, outputLP, sampleRate);
+			flag = AlgorithmInterfaceAsynchronousTest<IIR2ndTimeVaryingHighPassFilter>();
 			Assert::IsTrue(flag);
 
-			IIR2ndTimeVaryingHighPassFilter filterHighPass;
-			auto cHP = filterHighPass.GetCoefficients();
-			ArrayXXf outputHP(bufferSize, cHP.NChannels);
-			sampleRate = cHP.SampleRate;
-			flag = AlgorithmInterfaceStreamingTest<IIR2ndTimeVaryingHighPassFilterStreaming>(input, outputHP, sampleRate);
+			flag = AlgorithmInterfaceAsynchronousTest<IIR2ndTimeVaryingBandPassFilter>();
 			Assert::IsTrue(flag);
 
-			IIR2ndTimeVaryingBandPassFilter filterBandPass;
-			auto cBP = filterBandPass.GetCoefficients();
-			ArrayXXf outputBP(bufferSize, cBP.NChannels);
-			sampleRate = cBP.SampleRate;
-			flag = AlgorithmInterfaceStreamingTest<IIR2ndTimeVaryingBandPassFilterStreaming>(input, outputBP, sampleRate);
+			flag = AlgorithmInterfaceAsynchronousTest<IIR2ndTimeVaryingNotchFilter>();
 			Assert::IsTrue(flag);
 
-			IIR2ndTimeVaryingNotchFilter filterNotch;
-			auto cN = filterNotch.GetCoefficients();
-			ArrayXXf outputN(bufferSize, cN.NChannels);
-			sampleRate = cN.SampleRate;
-			flag = AlgorithmInterfaceStreamingTest<IIR2ndTimeVaryingNotchFilterStreaming>(input, outputN, sampleRate);
+			flag = AlgorithmInterfaceAsynchronousTest<IIR2ndTimeVaryingBellFilter>();
 			Assert::IsTrue(flag);
 
-			IIR2ndTimeVaryingBellFilter filterBell;
-			auto cB = filterBell.GetCoefficients();
-			ArrayXXf outputB(bufferSize, cB.NChannels);
-			sampleRate = cB.SampleRate;
-			flag = AlgorithmInterfaceStreamingTest<IIR2ndTimeVaryingBellFilterStreaming>(input, outputB, sampleRate);
+			flag = AlgorithmInterfaceAsynchronousTest<IIR2ndTimeVaryingHighShelfFilter>();
 			Assert::IsTrue(flag);
 
-			IIR2ndTimeVaryingHighShelfFilter filterHighShelf;
-			auto cHS = filterHighShelf.GetCoefficients();
-			ArrayXXf outputHS(bufferSize, cHS.NChannels);
-			sampleRate = cHS.SampleRate;
-			flag = AlgorithmInterfaceStreamingTest<IIR2ndTimeVaryingHighShelfFilterStreaming>(input, outputHS, sampleRate);
-			Assert::IsTrue(flag);
-
-			IIR2ndTimeVaryingLowShelfFilter filterLowShelf;
-			auto cLS = filterLowShelf.GetCoefficients();
-			ArrayXXf outputLS(bufferSize, cLS.NChannels);
-			sampleRate = cLS.SampleRate;
-			flag = AlgorithmInterfaceStreamingTest<IIR2ndTimeVaryingLowShelfFilterStreaming>(input, outputLS, sampleRate);
+			flag = AlgorithmInterfaceAsynchronousTest<IIR2ndTimeVaryingLowShelfFilter>();
 			Assert::IsTrue(flag);
 		}
 	};
 
 	TEST_CLASS(LimiterHardTest)
 	{
-		TEST_METHOD(InterfaceStreaming)
+		TEST_METHOD(InterfaceAsynchronous)
 		{
-			outputLog << "Running LimiterHardTest->InterfaceStreaming.\n";
-			LimiterHard limiter;
-			auto c = limiter.GetCoefficients();
-			ArrayXXf input(c.BufferSize, c.NChannels), output(c.BufferSize, c.NChannels);
-			input.setRandom();
-			input *= 1.25; // setRandom is in interval [-1,1] and LimiterHard is only limiting values larger than +-1.
-			float sampleRate = c.SampleRate;
-			auto flag = AlgorithmInterfaceStreamingTest<LimiterHardStreaming>(input, output, sampleRate);
+			outputLog << "Running LimiterHardTest->InterfaceAsynchronous.\n";
+			auto flag = AlgorithmInterfaceAsynchronousTest<LimiterHard>();
 			Assert::IsTrue(flag);
 		}
-
 		// delay input signal and save result to file
 		TEST_METHOD(DelaylinearArray)
 		{
-			LimiterHardStreaming limiter;
-			auto c = limiter.Algo.GetCoefficients();
+			LimiterHard limiter;
+			auto c = limiter.GetCoefficients();
 			c.BufferSize = 64;
 			c.HoldTimeMS = 7.f;
-			c.NChannels = 2;
+			c.NChannelsIn = 2;
 			c.SampleRate = 44100.f;
-			limiter.Initialize(c.BufferSize, c.NChannels, c.SampleRate, c);
+			limiter.Initialize(c);
 
 			AudioFile<float> audioFile, audioFileRef;
-			audioFile.setNumChannels(c.NChannels);
+			audioFile.setNumChannels(c.NChannelsIn);
 			audioFile.setBitDepth(24);
 			audioFile.setSampleRate(static_cast<int>(c.SampleRate));
-			audioFileRef.setNumChannels(c.NChannels);
+			audioFileRef.setNumChannels(c.NChannelsIn);
 			audioFileRef.setBitDepth(24);
 			audioFileRef.setSampleRate(static_cast<int>(c.SampleRate));
 
 			int nBuffers = static_cast<int>(c.SampleRate/c.BufferSize*c.HoldTimeMS*5/1000);
-			ArrayXXf input(nBuffers * c.BufferSize, c.NChannels);
-			ArrayXXf output(c.BufferSize, c.NChannels);
+			ArrayXXf input(nBuffers * c.BufferSize, c.NChannelsIn);
+			ArrayXXf output(c.BufferSize, c.NChannelsIn);
 			input.col(0).setLinSpaced(nBuffers*c.BufferSize, 0, 1);
 			input.col(1).setLinSpaced(nBuffers*c.BufferSize, 0, 1);
 			for (auto i = 0; i < nBuffers; i++)
@@ -335,7 +367,7 @@ namespace AsynchronousStreamingTests
 				limiter.Process(input.middleRows(i*c.BufferSize, c.BufferSize), output);
 				for (auto j = 0; j < c.BufferSize; j++)
 				{
-					for (auto channel = 0; channel < c.NChannels; channel++)
+					for (auto channel = 0; channel < c.NChannelsIn; channel++)
 					{
 						audioFile.samples[channel].push_back(output(j, channel));
 						audioFileRef.samples[channel].push_back(input.middleRows(i*c.BufferSize, c.BufferSize)(j, channel));
@@ -345,42 +377,28 @@ namespace AsynchronousStreamingTests
 			outputLog << "Saving file.\n";
 			audioFile.save("../../../../Temp/LimiterHard.wav", AudioFileFormat::Wave); // truncate to 24bits 
 			audioFileRef.save("../../../../Temp/LimiterHardRef.wav", AudioFileFormat::Wave); // truncate to 24bits 
-
 		}
 	};
 
 	TEST_CLASS(FFTConvolutionTest)
 	{
-		TEST_METHOD(InterfaceStreaming)
+		TEST_METHOD(InterfaceAsynchronous)
 		{
 			FFTConvolution conv;
 			auto c = conv.GetCoefficients();
-			ArrayXXf input(c.BufferSize, c.NChannels);
 			ArrayXf filter(c.FilterSize);
-			input.setRandom();
 			filter.setRandom();
-			ArrayXXf output(c.BufferSize, c.NChannels * c.NFiltersPerChannel);
-			float sampleRate = 48000.f;
-			auto flag = AlgorithmInterfaceStreamingTest<FFTConvolutionStreaming>(input, output, sampleRate, filter);
+			auto flag = AlgorithmInterfaceAsynchronousTest<FFTConvolution>(filter);
 			Assert::IsTrue(flag);
 		}
 	};
 
 	TEST_CLASS(VirtualizationHeadphonesTest)
 	{
-		TEST_METHOD(InterfaceStreaming)
+		TEST_METHOD(InterfaceAsynchronous)
 		{
 			outputLog << "Running VirtualizationHeadphonesTest->Interface.\n";
-			VirtualizationHeadphones virtualHeadphones;
-			auto c = virtualHeadphones.GetCoefficients();
-			ArrayXXf input(c.BufferSize, c.NChannels), output(c.BufferSize, c.NChannels);
-			input.setRandom();
-			ArrayXf sub(c.BufferSize);
-			sub.setRandom();
-			float sampleRate;
-			if (c.SampleRate == c.Hz44100) { sampleRate = 44100.f; }
-			else if (c.SampleRate == c.Hz48000) { sampleRate = 48000.f; }
-			auto flag = AlgorithmInterfaceStreamingTest<VirtualizationHeadphonesStreaming>(input, output, sampleRate);
+			auto flag = AlgorithmInterfaceAsynchronousTest<VirtualizationHeadphones>();
 			Assert::IsTrue(flag);
 		}
 
@@ -393,7 +411,7 @@ namespace AsynchronousStreamingTests
 			auto c = virtualHeadphonesx1.GetCoefficients();
 			c.SampleRate = c.Hz48000;
 			virtualHeadphonesx1.Initialize(c);
-			ArrayXXf inputx1(c.BufferSize, c.NChannels), output(c.BufferSize, 2);
+			ArrayXXf inputx1(c.BufferSize, c.NChannelsIn), output(c.BufferSize, 2);
 			inputx1.setZero();
 			inputx1(0, 0) = 1.f;
 			ArrayXf sub(c.BufferSize);
@@ -406,7 +424,7 @@ namespace AsynchronousStreamingTests
 			cx2.SampleRate = cx2.Hz96000;
 			cx2.BufferSize = 2 * cx2.BufferSize;
 			virtualHeadphonesx2.Initialize(cx2);
-			ArrayXXf inputx2(cx2.BufferSize, cx2.NChannels), outputx2(cx2.BufferSize, 2);
+			ArrayXXf inputx2(cx2.BufferSize, cx2.NChannelsIn), outputx2(cx2.BufferSize, 2);
 			inputx2.setZero();
 			inputx2(0, 0) = 1.f;
 			ArrayXf subx2(cx2.BufferSize);
@@ -426,7 +444,7 @@ namespace AsynchronousStreamingTests
 			auto cx4 = virtualHeadphonesx4.GetCoefficients();
 			cx4.SampleRate = cx4.Hz192000;
 			virtualHeadphonesx4.Initialize(cx4);
-			ArrayXXf inputx4(cx4.BufferSize, cx4.NChannels), outputx4(cx4.BufferSize, 2);
+			ArrayXXf inputx4(cx4.BufferSize, cx4.NChannelsIn), outputx4(cx4.BufferSize, 2);
 			inputx4.setZero();
 			inputx4(0, 0) = 1.f;
 			ArrayXf subx4(cx4.BufferSize);
@@ -483,7 +501,7 @@ namespace AsynchronousStreamingTests
 			virtualHeadphones.Initialize(c);
 			int delay = virtualHeadphones.GetLatencySamples();
 
-			ArrayXXf input(c.BufferSize, c.NChannels), output(c.BufferSize, 2);
+			ArrayXXf input(c.BufferSize, c.NChannelsIn), output(c.BufferSize, 2);
 			input.setZero();
 			virtualHeadphones.Process(input, output);
 			float error = (output.bottomRows(c.BufferSize - delay) - input.rightCols<1>().head(c.BufferSize - delay).replicate(1, 2)).abs2().sum();

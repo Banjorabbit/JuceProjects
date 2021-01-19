@@ -24,6 +24,7 @@ struct I
 	using Complex = In<Eigen::ArrayXcf>;
 	using Real2D = In<Eigen::ArrayXXf>;
 	using Complex2D = In<Eigen::ArrayXXcf>;
+	using Bool2D = In<Eigen::Array<bool, Eigen::Dynamic, Eigen::Dynamic>>;
 	using Boolean = const bool&;
 	using Void = void*;
 
@@ -38,11 +39,15 @@ struct I
 	struct BeamformerAdaptive;
 	struct EchoSuppressionCovariance;
 	struct EchoCancellerMomentum;
+	struct EchoCancellerNLMS;
+	struct EchoCancellerToeplitz;
 	struct CubicSpline;
 	struct DesignFIRNonParametric;
 	struct DesignIIRNonParametric;
 	struct InterpolationCubic;
 	struct InterpolationTemporal;
+	struct InterpolateTonal;
+	struct ToeplitzSolver;
 
 	struct NonparametricEqualizerPersistent;
 
@@ -58,6 +63,15 @@ struct I
 
 	template<typename T>
 	struct GetType<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> { typedef T type; };
+
+	template<typename>
+	struct GetScalarType;
+
+	template<typename T>
+	struct GetScalarType<In<Eigen::Array<T, Eigen::Dynamic, 1>>> { typedef T type; };
+
+	template<typename T>
+	struct GetScalarType<In<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>>> { typedef T type; };
 };
 
 // Eigen outputs should be Eigen::Ref<T> types: 
@@ -89,7 +103,7 @@ struct O
 	using Void = void*;
 
 	struct NoiseEstimationSPP;
-	struct IIR2ndTimeVaryingFilter;
+	struct StateVariableFilter;
 	struct DesignIIRMinPhase;
 	struct DesignIIRNonParametric;
 	struct FilterMinMax;
@@ -106,4 +120,13 @@ struct O
 
 	template<typename T>
 	struct GetType<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>> { typedef T type; };
+
+	template<typename>
+	struct GetScalarType;
+
+	template<typename T>
+	struct GetScalarType<Out<Eigen::Array<T, Eigen::Dynamic, 1>>> { typedef T type; };
+
+	template<typename T>
+	struct GetScalarType<Out<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>>> { typedef T type; };
 };

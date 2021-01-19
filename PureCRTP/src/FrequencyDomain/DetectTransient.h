@@ -86,7 +86,7 @@ private:
 			{
 				auto xShortDiff = xPerceptual(i) - D.PerceptualShort(i);
 				D.PerceptualShort(i) += xShortDiff > 0.f ? D.AttackShortLambda * xShortDiff : D.ReleaseShortLambda * xShortDiff;
-				D.PerceptualLong(i) += D.LongLambda * xPerceptual(i) - D.PerceptualLong(i);
+				D.PerceptualLong(i) += D.LongLambda * (xPerceptual(i) - D.PerceptualLong(i));
 				auto activityProbability = D.PerceptualShort(i) / (D.PerceptualShort(i) + D.PerceptualLong(i));
 				activityFlag(i, channel) = activityProbability > P.TransientThreshold;
 			}
