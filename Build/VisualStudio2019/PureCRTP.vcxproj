@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\AsynchronousStreaming\Distortion.h" />
     <ClInclude Include="..\..\src\AsynchronousStreaming\FFTConvolution.h" />
     <ClInclude Include="..\..\src\AsynchronousStreaming\IIR2ndDF.h" />
     <ClInclude Include="..\..\src\AsynchronousStreaming\IIR2ndTimeVarying.h" />
@@ -160,6 +161,7 @@
     <ClInclude Include="..\..\src\AsynchronousStreaming\PipelinePreProcessing.h" />
     <ClInclude Include="..\..\src\AsynchronousStreaming\PitchShift.h" />
     <ClInclude Include="..\..\src\AsynchronousStreaming\PitchShiftAdaptiveResolution.h" />
+    <ClInclude Include="..\..\src\AsynchronousStreaming\SeparateTransient.h" />
     <ClInclude Include="..\..\src\AsynchronousStreaming\VirtualizationHeadphones.h" />
     <ClInclude Include="..\..\src\BaseClasses\AsynchronousStreaming.h" />
     <ClInclude Include="..\..\src\BaseClasses\Base.h" />
@@ -185,6 +187,7 @@
     <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerMomentum.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\EchoSuppressionCovariance.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\GainCalculation.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\InterpolateTonal.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\InterpolationTemporal.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\LoudnessModel.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\MinPhaseSpectrum.h" />
@@ -193,6 +196,7 @@
     <ClInclude Include="..\..\src\FrequencyDomain\DetectTonal.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\DetectVoiceActivation.h" />
     <ClInclude Include="..\..\src\InterpolationCubic.h" />
+    <ClInclude Include="..\..\src\SpectralMass.h" />
     <ClInclude Include="..\..\src\Upsampling2XCubic.h" />
   </ItemGroup>
   <ItemGroup>

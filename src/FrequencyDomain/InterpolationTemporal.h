@@ -12,6 +12,10 @@ class InterpolationTemporal : public Base<InterpolationTemporal, I::Interpolatio
 {
 	friend Base<InterpolationTemporal, I::InterpolationTemporal, O::Complex>;
 
+public:
+	Eigen::ArrayXf GetEnergy() const { return D.Energy; }
+
+private:
 	struct Coefficients
 	{
 		int NBands = 513;
@@ -22,16 +26,19 @@ class InterpolationTemporal : public Base<InterpolationTemporal, I::Interpolatio
 	struct Data
 	{
 		Eigen::ArrayXf Phase;
+		Eigen::ArrayXf Energy;
 		void Reset()
 		{
 			Phase.setZero();
+			Energy.setZero();
 		}
 		bool InitializeMemory(const Coefficients& c)
 		{
 			Phase.resize(c.NBands);
+			Energy.resize(c.NBands);
 			return true;
 		}
-		size_t GetAllocatedMemorySize() const { return Phase.GetAllocatedMemorySize(); }
+		size_t GetAllocatedMemorySize() const { return Phase.GetAllocatedMemorySize() + Energy.GetAllocatedMemorySize(); }
 		void OnParameterChange(const Parameters& p, const Coefficients& c) {}
 	} D;
 
@@ -39,13 +46,13 @@ class InterpolationTemporal : public Base<InterpolationTemporal, I::Interpolatio
 	{
 		using namespace std::complex_literals;
 
-		Eigen::ArrayXf energy = (xFreq.xEnergy.col(0) + xFreq.PointFractional * (xFreq.xEnergy.col(1) - xFreq.xEnergy.col(0)));
+		D.Energy = (xFreq.xEnergy.col(0) + xFreq.PointFractional * (xFreq.xEnergy.col(1) - xFreq.xEnergy.col(0)));
 		D.Phase += xFreq.xPhase.col(1) - xFreq.xPhase.col(0);
 
 		Eigen::Array<bool, Eigen::Dynamic, 1> localMax(C.NBands);
 		localMax(0) = false;
 		localMax(C.NBands - 1) = false;
-		localMax.segment(1, C.NBands - 2) = energy.head(C.NBands - 2) < energy.segment(1, C.NBands - 2) && energy.tail(C.NBands - 2) < energy.segment(1, C.NBands - 2); // size NBands - 2
+		localMax.segment(1, C.NBands - 2) = D.Energy.head(C.NBands - 2) < D.Energy.segment(1, C.NBands - 2) && D.Energy.tail(C.NBands - 2) < D.Energy.segment(1, C.NBands - 2); // size NBands - 2
 
 		// detect tones leaked to neighbour bins and match phase accross frequency
 		auto lastEnergy = 0.f;
@@ -54,8 +61,8 @@ class InterpolationTemporal : public Base<InterpolationTemporal, I::Interpolatio
 			if (localMax(i))
 			{
 				D.Phase(i + 1) = D.Phase(i) + static_cast<const float>(PI);
-				if (energy(i) > lastEnergy) { D.Phase(i - 1) = D.Phase(i) - static_cast<const float>(PI); }
-				lastEnergy = energy(i);
+				if (D.Energy(i) > lastEnergy) { D.Phase(i - 1) = D.Phase(i) - static_cast<const float>(PI); }
+				lastEnergy = D.Energy(i);
 			}
 		}
 		// detect transients and match phase accross frequency
@@ -72,9 +79,9 @@ class InterpolationTemporal : public Base<InterpolationTemporal, I::Interpolatio
 		}
 
 		// with angle
-		energy = energy.sqrt();
-		yFreq.real() = energy * D.Phase.cos();
-		yFreq.imag() = energy * D.Phase.sin();
+		const Eigen::ArrayXf magnitude = D.Energy.sqrt();
+		yFreq.real() = magnitude * D.Phase.cos();
+		yFreq.imag() = magnitude * D.Phase.sin();
 	}
 
 	void ProcessOff(Input xFreq, Output yFreq) { yFreq.setZero(); }

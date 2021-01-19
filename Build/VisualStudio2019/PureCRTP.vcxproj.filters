@@ -153,6 +153,18 @@
     <ClInclude Include="..\..\src\AsynchronousStreaming\LimiterHard.h">
       <Filter>Header Files\AsynchronousStreaming</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousStreaming\SeparateTransient.h">
+      <Filter>Header Files\AsynchronousStreaming</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\InterpolateTonal.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\SpectralMass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousStreaming\Distortion.h">
+      <Filter>Header Files\AsynchronousStreaming</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\AsynchronousStreaming\VirtualizationHeadphones.cpp">

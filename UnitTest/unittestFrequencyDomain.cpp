@@ -5,8 +5,11 @@
 #include "../src/FrequencyDomain/DetectTransient.h"
 #include "../src/FrequencyDomain/DetectVoiceActivation.h"
 #include "../src/FrequencyDomain/EchoCancellerMomentum.h"
+#include "../src/FrequencyDomain/EchoCancellerNLMS.h"
+#include "../src/FrequencyDomain/EchoCancellerToeplitz.h"
 #include "../src/FrequencyDomain/EchoSuppressionCovariance.h"
 #include "../src/FrequencyDomain/GainCalculation.h"
+#include "../src/FrequencyDomain/InterpolateTonal.h"
 #include "../src/FrequencyDomain/InterpolationTemporal.h"
 #include "../src/FrequencyDomain/LoudnessModel.h"
 #include "../src/FrequencyDomain/MinPhaseSpectrum.h"
@@ -517,6 +520,24 @@ namespace FrequencyDomainTests
 		}
 	};
 
+	TEST_CLASS(InterpolateTonalTest)
+	{
+		TEST_METHOD(Interface)
+		{
+			InterpolateTonal interpolate;
+			auto c = interpolate.GetCoefficients();
+			ArrayXXf xEnergy(c.NBands, 2);
+			ArrayXXf xPhase(c.NBands, 2);
+			float fractionalDelay = 0.25f;
+			xEnergy.setRandom().abs();
+			xPhase.setRandom();
+			I::InterpolateTonal input = { xEnergy, xPhase, fractionalDelay };
+			ArrayXcf output(c.NBands);
+			auto flag = AlgorithmInterfaceTest<InterpolateTonal>(input, output);
+			Assert::IsTrue(flag);
+		}
+	};
+
 	TEST_CLASS(InterpolationTemporalTest)
 	{
 		TEST_METHOD(Interface)
@@ -923,6 +944,40 @@ namespace FrequencyDomainTests
 			outputLog << "Test succesful." << std::endl;
 		}
 #endif // #if NDEBUG
+	};
+
+	TEST_CLASS(EchoCancellerNLMSTest)
+	{
+		TEST_METHOD(Interface)
+		{
+			outputLog << "Running EchoCancellerNLMSTest->Interface.\n";
+			EchoCancellerNLMS echoCanceller;
+			auto c = echoCanceller.GetCoefficients();
+			ArrayXXcf input1(c.NBands, c.NChannels);
+			ArrayXcf input2(c.NBands);
+			input1.setRandom();
+			input2.setRandom();
+			I::EchoCancellerNLMS input = { input1, input2 };
+			ArrayXXcf output(c.NBands, c.NChannels);
+			Assert::IsTrue(AlgorithmInterfaceTest<EchoCancellerNLMS>(input, output));
+		}
+	};
+
+	TEST_CLASS(EchoCancellerToeplitzTest)
+	{
+		TEST_METHOD(Interface)
+		{
+			outputLog << "Running EchoCancellerToeplitzTest->Interface.\n";
+			EchoCancellerToeplitz echoCanceller;
+			auto c = echoCanceller.GetCoefficients();
+			ArrayXXcf input1(c.NBands, c.NChannels);
+			ArrayXcf input2(c.NBands);
+			input1.setRandom();
+			input2.setRandom();
+			I::EchoCancellerToeplitz input = { input1, input2 };
+			ArrayXXcf output(c.NBands, c.NChannels);
+			Assert::IsTrue(AlgorithmInterfaceTest<EchoCancellerToeplitz>(input, output));
+		}
 	};
 
 	TEST_CLASS(DetectVoiceActivityTest)

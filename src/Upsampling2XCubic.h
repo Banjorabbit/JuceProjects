@@ -5,6 +5,8 @@
 // 2x upsampling using 4 point, 3rd order Hermite interpolation based on :
 // http ://yehar.com/blog/wp-content/uploads/2009/08/deip.pdf
 //
+// This upsampling assumes that there is an additional point after the last samples that has the value 0.
+//
 // author: Kristian Timm Andersen
 
 class Upsampling2XCubic : public Base<Upsampling2XCubic>

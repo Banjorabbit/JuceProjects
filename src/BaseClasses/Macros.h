@@ -1,3 +1,4 @@
+#pragma once
 // author: Kristian Timm Andersen
 
 #define EVAL(...) __VA_ARGS__

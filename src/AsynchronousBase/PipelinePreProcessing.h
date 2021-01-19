@@ -7,12 +7,13 @@
 #include "../FrequencyDomain/BeamformerAdaptive.h"
 #include "../FrequencyDomain/NoiseSuppression.h"
 
-class PipelinePreProcessing : public Base<PipelinePreProcessing>
+class PipelinePreProcessing : public AsynchronousBase<PipelinePreProcessing>
 {
 	friend Base<PipelinePreProcessing>;
 	struct Coefficients; // forward declaration so CalculateNBuffersInFrame(Coefficients& c) can be defined
 
 public:
+	int GetNChannelsOut() const { return 1; }
 	auto GetLatencySamples() const { return D.LatencySamples; }
 	auto GetFFTSize() const { return D.FFTSize; }
 	static int CalculateNBuffersInFrame(const Coefficients& c)
@@ -20,6 +21,35 @@ public:
 		int nBuffersInFrame = 1 + static_cast<int>(c.DelayDesired * c.SampleRate / c.BufferSize);
 		nBuffersInFrame = std::max(static_cast<int>(nBuffersInFrame / 4) * 4, 4); // force factor of 4
 		return nBuffersInFrame;
+	}
+
+	auto GetAsynchronousCoefficients(const std::vector<int> bufferSizesSuggested) const
+	{
+		Coefficients c = C;
+		auto bufferSizes = bufferSizesSuggested;
+
+		// start suggestion should be size 2^x close to 10ms
+		int goodSize = static_cast<int>(powf(2, std::round(std::log2(.01f*c.SampleRate))));
+		// if first element in bufferSizesSuggested is far from good size, insert goodSize as first element
+		if (static_cast<float>(bufferSizesSuggested[0]) / goodSize < 0.666f || static_cast<float>(bufferSizesSuggested[0]) / goodSize > 1.5f)
+		{
+			bufferSizes.insert(bufferSizes.begin(), goodSize);
+		}
+		else // otherwise keep that element as first element
+		{
+			bufferSizes.insert(bufferSizes.begin() + 1, goodSize);
+		}
+
+		// return with first value that is a valid size
+		for (auto& size : bufferSizes)
+		{
+			if (FFTReal::IsFFTSizeValid(size * CalculateNBuffersInFrame(c)))
+			{
+				c.BufferSize = size;
+				return c;// return with first match
+			}
+		}
+		return c; // failed to find valid BufferSize so use default
 	}
 
 	IIR2ndDF2Transposed FilterHighpass;
@@ -34,11 +64,12 @@ public:
 private:
 	struct Coefficients
 	{
-		int NChannels = 4; // Number of Input channels is NChannels - NChannelsLoopback
+		int NChannelsIn = 4; // Number of Input channels is NChannelsIn - NChannelsLoopback
 		int NChannelsLoopback = 2;
-		int BufferSize = 160;
-		float SampleRate = 16e3f;
+		int BufferSize = 512;
+		float SampleRate = 44100.f;
 		float DelayDesired = .03f;
+		AsynchronousBufferType AsynchronousBuffer = VARIABLE_SIZE;
 	} C;
 
 	struct Parameters
@@ -63,7 +94,7 @@ private:
 		}
 		bool InitializeMemory(const Coefficients& c)	
 		{
-			NChannelsInput = std::max(c.NChannels - c.NChannelsLoopback, 0);
+			NChannelsInput = std::max(c.NChannelsIn - c.NChannelsLoopback, 0);
 			NBuffersInFrame = CalculateNBuffersInFrame(c);
 			LatencySamples = (NBuffersInFrame - 1) * c.BufferSize;
 			FFTSize = NBuffersInFrame * c.BufferSize;
@@ -90,7 +121,8 @@ private:
 		const auto filterbankRate = C.SampleRate / C.BufferSize;
 		// highpass filter
 		auto cFH = FilterHighpass.GetCoefficients();
-		cFH.NChannels = D.NChannelsInput;
+		cFH.NChannelsIn = D.NChannelsInput;
+		cFH.BufferSize = C.BufferSize;
 		cFH.SampleRate = C.SampleRate;
 		auto flag = FilterHighpass.Initialize(cFH);
 		// filterbank
@@ -165,45 +197,4 @@ private:
 	}
 
 	void ProcessOff(Input xTime, Output yTime) { yTime = xTime.col(0); }
-};
-
-class PipelinePreProcessingStreaming : public AsynchronousStreaming<PipelinePreProcessingStreaming, PipelinePreProcessing>
-{
-	friend AsynchronousStreaming<PipelinePreProcessingStreaming, PipelinePreProcessing>;
-
-	int CalculateLatencySamples() const { return Algo.GetLatencySamples(); }
-	int CalculateNChannelsOut(const int nChannels) const { return 1; }
-
-	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
-	{
-		if (nChannels <= c.NChannelsLoopback) { return -1; }
-		c.NChannels = nChannels; // number of channels is input + loopback channels
-		c.SampleRate = sampleRate;
-
-		// start suggestion should be size 2^x close to 10ms
-		int goodSize = static_cast<int>(powf(2, std::round(std::log2(.01f*sampleRate))));
-		if (static_cast<float>(bufferSizesSuggested[0]) / goodSize < 0.666f || static_cast<float>(bufferSizesSuggested[0]) / goodSize > 1.5f)
-		{
-			bufferSizesSuggested.insert(bufferSizesSuggested.begin(), goodSize);
-		}
-		else
-		{
-			bufferSizesSuggested.insert(bufferSizesSuggested.begin() + 1, goodSize);
-		}
-		bufferSizesSuggested.push_back(c.BufferSize);
-
-		// return with first value that is a valid size
-		for (auto& size : bufferSizesSuggested)
-		{
-			if (FFTReal::IsFFTSizeValid(size * Algo.CalculateNBuffersInFrame(c)))
-			{
-				c.BufferSize = size;
-				return size;
-			}
-		}
-		// failed to set up correctly
-		return -1;
-	}
-
-	
 };

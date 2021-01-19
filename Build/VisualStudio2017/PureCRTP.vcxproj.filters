@@ -16,11 +16,11 @@
     <Filter Include="Header Files\FrequencyDomain">
       <UniqueIdentifier>{88bb7f94-406c-467e-8650-5450aa8bcf8e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\AsynchronousStreaming">
-      <UniqueIdentifier>{c62d5663-7664-40be-a2d4-bb9162b9ab26}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\BaseClasses">
       <UniqueIdentifier>{006e24b6-0e87-4325-b9d1-687ad59dca7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\AsynchronousBase">
+      <UniqueIdentifier>{e4febe52-1bb6-41eb-829b-39f3df66fc98}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -56,21 +56,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\Upsampling2XCubic.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\AsynchronousStreaming\FFTConvolution.h">
-      <Filter>Header Files\AsynchronousStreaming</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\AsynchronousStreaming\NonparametricEqualizer.h">
-      <Filter>Header Files\AsynchronousStreaming</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\AsynchronousStreaming\PipelinePreProcessing.h">
-      <Filter>Header Files\AsynchronousStreaming</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\AsynchronousStreaming\PitchShift.h">
-      <Filter>Header Files\AsynchronousStreaming</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\AsynchronousStreaming\VirtualizationHeadphones.h">
-      <Filter>Header Files\AsynchronousStreaming</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\FrequencyDomain\BeamformerAdaptive.h">
       <Filter>Header Files\FrequencyDomain</Filter>
@@ -111,23 +96,11 @@
     <ClInclude Include="..\..\src\BaseClasses\PureCRTP.h">
       <Filter>Header Files\BaseClasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\BaseClasses\AsynchronousStreaming.h">
-      <Filter>Header Files\BaseClasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\BaseClasses\VectorAlgo.h">
       <Filter>Header Files\BaseClasses</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\BaseClasses\ConstrainedType.h">
       <Filter>Header Files\BaseClasses</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\AsynchronousStreaming\IIR2ndDF.h">
-      <Filter>Header Files\AsynchronousStreaming</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\AsynchronousStreaming\IIR2ndTimeVarying.h">
-      <Filter>Header Files\AsynchronousStreaming</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\AsynchronousStreaming\IIR2ndNonLin.h">
-      <Filter>Header Files\AsynchronousStreaming</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\FrequencyDomain\LoudnessModel.h">
       <Filter>Header Files\FrequencyDomain</Filter>
@@ -144,21 +117,81 @@
     <ClInclude Include="..\..\src\FrequencyDomain\DetectTransient.h">
       <Filter>Header Files\FrequencyDomain</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\AsynchronousStreaming\PitchShiftAdaptiveResolution.h">
-      <Filter>Header Files\AsynchronousStreaming</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\FilterMinMax.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\AsynchronousStreaming\LimiterHard.h">
-      <Filter>Header Files\AsynchronousStreaming</Filter>
+    <ClInclude Include="..\..\src\FrequencyDomain\InterpolateTonal.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\SpectralMass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerNLMS.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerToeplitz.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ToeplitzSolver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\StateVariableFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\BaseClasses\AsynchronousBase.h">
+      <Filter>Header Files\BaseClasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\Distortion.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\FFTConvolution.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\IIR2ndDF.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\IIR2ndNonLin.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\IIR2ndTimeVarying.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\LimiterHard.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\NonparametricEqualizer.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\PipelinePreProcessing.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\PitchShift.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\PitchShiftAdaptiveResolution.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\SeparateTransient.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\VirtualizationHeadphones.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\PitchShiftPhaseLocking.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\SeparateTonal.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\SeparateTonalTextureTransient.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\AsynchronousStreaming\VirtualizationHeadphones.cpp">
+    <ClCompile Include="..\..\src\FrequencyDomain\CriticalBands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\FrequencyDomain\CriticalBands.cpp">
+    <ClCompile Include="..\..\src\AsynchronousBase\VirtualizationHeadphones.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

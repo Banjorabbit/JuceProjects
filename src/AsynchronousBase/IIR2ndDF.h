@@ -3,15 +3,19 @@
 
 namespace IIR2ndOrderBaseClass
 {
-	class IIR2ndOrder : public Base<IIR2ndOrder>
+	// define general IIR2ndOrder class that other classes can be specialized from
+	template<typename Tinput = I::Real2D, typename Toutput = O::Real2D, typename Tpersistent = I::Real>
+	class IIR2ndOrder : public AsynchronousBase<IIR2ndOrder<Tinput, Toutput, Tpersistent>, Tinput, Toutput, Tpersistent>
 	{
-		friend Base<IIR2ndOrder>;
+		friend Base<IIR2ndOrder<Tinput, Toutput, Tpersistent>, Tinput, Toutput, Tpersistent>;
 
 	public:
 		struct Coefficients
 		{
-			int NChannels = 2;
+			int NChannelsIn = 2;
+			int BufferSize = 128;
 			float SampleRate = 16e3f;
+			AsynchronousBufferType AsynchronousBuffer = VARIABLE_SIZE;
 		} C;
 
 		struct Parameters
@@ -26,13 +30,13 @@ namespace IIR2ndOrderBaseClass
 		struct Data
 		{
 			float A1, A2, B0, B1, B2, Gain;
-			Eigen::ArrayXf State1, State2;
+			typename I::GetType<Tinput>::type State1, State2; // set equal to input type
 			void Reset() { State1.setZero(); State2.setZero(); }
 			bool InitializeMemory(const Coefficients& c)
 			{
 				A1 = 0.f; A2 = 0.f; B0 = 1.f; A1 = 0.f; A1 = 0.f;
-				State1.resize(c.NChannels);
-				State2.resize(c.NChannels);
+				State1.resize(c.NChannelsIn, 1);
+				State2.resize(c.NChannelsIn, 1);
 				return true;
 			}
 			size_t GetAllocatedMemorySize() const { return State1.GetAllocatedMemorySize() + State2.GetAllocatedMemorySize(); }
@@ -65,9 +69,13 @@ namespace IIR2ndOrderBaseClass
 					t0 = 2.0 * PI * static_cast<double>(p.Frequency) / static_cast<double>(c.SampleRate);
 
 					if (Gain >= 1.0f)
+					{
 						Beta = t0 / (2.0 * static_cast<double>(p.Q));
+					}
 					else
+					{
 						Beta = t0 / (2.0 * static_cast<double>(Gain) * static_cast<double>(p.Q));
+					}
 					dA2 = -0.5 * (1.0 - Beta) / (1.0 + Beta);
 					dA1 = (0.5 - dA2) * cos(t0);
 					dB0 = (static_cast<double>(Gain) - 1.0) * (0.25 + 0.5 * dA2) + 0.5;
@@ -259,15 +267,17 @@ namespace IIR2ndOrderBaseClass
 		void ProcessOn(Input xTime, Output yTime) { yTime = xTime; }
 		void ProcessOff(Input xTime, Output yTime) { yTime = xTime; }
 	};
-} // end namespace FilterBaseClass
+} // end namespace IIR2ndOrderBaseClass
 
-class IIR2ndDF2 : public Base<IIR2ndDF2>
+// IIR 2nd order Direct-Form 2 filter with support for any input/output types
+template<typename Tinput = I::Real2D, typename Toutput = O::Real2D>
+class IIR2ndDF2AnyType : public AsynchronousBase<IIR2ndDF2AnyType<Tinput, Toutput>, Tinput, Toutput>
 {
-	friend Base<IIR2ndDF2>;
+	friend Base<IIR2ndDF2AnyType<Tinput, Toutput>, Tinput, Toutput>;
 
-	typedef IIR2ndOrderBaseClass::IIR2ndOrder::Coefficients Coefficients;
-	typedef IIR2ndOrderBaseClass::IIR2ndOrder::Parameters Parameters;
-	typedef IIR2ndOrderBaseClass::IIR2ndOrder::Data Data;
+	typedef typename IIR2ndOrderBaseClass::IIR2ndOrder<Tinput, Toutput>::Coefficients Coefficients;
+	typedef typename IIR2ndOrderBaseClass::IIR2ndOrder<Tinput, Toutput>::Parameters Parameters;
+	typedef typename IIR2ndOrderBaseClass::IIR2ndOrder<Tinput, Toutput>::Data Data;
 
 	Coefficients C;
 	Parameters P;
@@ -275,11 +285,11 @@ class IIR2ndDF2 : public Base<IIR2ndDF2>
 
 	void ProcessOn(Input xTime, Output yTime)
 	{
-		for (auto sample = 0; sample < xTime.rows(); sample++)
+		for (auto sample = 0; sample < C.BufferSize; sample++)
 		{
-			for (auto channel = 0; channel < C.NChannels; channel++) // Channel in inner loop is faster according to profiling
+			for (auto channel = 0; channel < C.NChannelsIn; channel++) // Channel in inner loop is faster according to profiling
 			{
-				float sub = xTime(sample, channel) - D.A1 * D.State1(channel) - D.A2 * D.State2(channel);
+				I::GetScalarType<Tinput>::type sub = xTime(sample, channel) - D.A1 * D.State1(channel) - D.A2 * D.State2(channel);
 				yTime(sample, channel) = D.B0 * sub + D.B1 * D.State1(channel) + D.B2 * D.State2(channel);
 
 				// Update state variables
@@ -293,13 +303,15 @@ class IIR2ndDF2 : public Base<IIR2ndDF2>
 	void ProcessOff(Input xTime, Output yTime) { yTime = xTime; }
 };
 
-class IIR2ndDF2Transposed : public Base<IIR2ndDF2Transposed, I::Real2D, O::Real2D, I::Real>
+// IIR 2nd order Direct-Form 2 Transposed filter with support for any input/output types
+template<typename Tinput = I::Real2D, typename Toutput = O::Real2D>
+class IIR2ndDF2TransposedAnyType : public AsynchronousBase<IIR2ndDF2TransposedAnyType<Tinput, Toutput>, Tinput, Toutput, I::Real>
 {
-	friend Base<IIR2ndDF2Transposed, I::Real2D, O::Real2D, I::Real>;
+	friend Base<IIR2ndDF2TransposedAnyType<Tinput, Toutput>, Tinput, Toutput, I::Real>;
 
-	typedef IIR2ndOrderBaseClass::IIR2ndOrder::Coefficients Coefficients;
-	typedef IIR2ndOrderBaseClass::IIR2ndOrder::Parameters Parameters;
-	typedef IIR2ndOrderBaseClass::IIR2ndOrder::Data Data;
+	typedef typename IIR2ndOrderBaseClass::IIR2ndOrder<Tinput, Toutput>::Coefficients Coefficients;
+	typedef typename IIR2ndOrderBaseClass::IIR2ndOrder<Tinput, Toutput>::Parameters Parameters;
+	typedef typename IIR2ndOrderBaseClass::IIR2ndOrder<Tinput, Toutput>::Data Data;
 
 	Coefficients C;
 	Parameters P;
@@ -309,22 +321,32 @@ class IIR2ndDF2Transposed : public Base<IIR2ndDF2Transposed, I::Real2D, O::Real2
 	{
 		if (P.FilterType == P.Custom)
 		{
-			D.B0 = filterCoefficients(0) / filterCoefficients(3);
-			D.B1 = filterCoefficients(1) / filterCoefficients(3);
-			D.B2 = filterCoefficients(2) / filterCoefficients(3);
-			D.A1 = filterCoefficients(4) / filterCoefficients(3);
-			D.A2 = filterCoefficients(5) / filterCoefficients(3);
-			
+			if (filterCoefficients(3) != 0.f)
+			{
+				D.B0 = filterCoefficients(0) / filterCoefficients(3);
+				D.B1 = filterCoefficients(1) / filterCoefficients(3);
+				D.B2 = filterCoefficients(2) / filterCoefficients(3);
+				D.A1 = filterCoefficients(4) / filterCoefficients(3);
+				D.A2 = filterCoefficients(5) / filterCoefficients(3);
+			}
+			else // this is not a valid filter, so set all coefficients to zero
+			{
+				D.B0 = 0.f;
+				D.B1 = 0.f;
+				D.B1 = 0.f;
+				D.A1 = 0.f;
+				D.A2 = 0.f;
+			}
 		}
 	}
 
 	void ProcessOn(Input xTime, Output yTime)
 	{
-		for (auto sample = 0; sample < xTime.rows(); sample++)
+		for (auto sample = 0; sample < C.BufferSize; sample++)
 		{
-			for (auto channel = 0; channel < C.NChannels; channel++) // Channel in inner loop is faster according to profiling
+			for (auto channel = 0; channel < C.NChannelsIn; channel++) // Channel in inner loop is faster according to profiling
 			{
-				float out = xTime(sample, channel) * D.B0 + D.State1(channel); // can not write directly to yTime if yTime and xTime are same memory
+				O::GetScalarType<Toutput>::type out = xTime(sample, channel) * D.B0 + D.State1(channel); // can not write directly to yTime if yTime and xTime are same memory
 				// Update state variables
 				D.State1(channel) = xTime(sample, channel) * D.B1 - out * D.A1 + D.State2(channel);
 				D.State2(channel) = xTime(sample, channel) * D.B2 - out * D.A2;
@@ -336,19 +358,23 @@ class IIR2ndDF2Transposed : public Base<IIR2ndDF2Transposed, I::Real2D, O::Real2
 	void ProcessOff(Input xTime, Output yTime) { yTime = xTime; }
 };
 
-class IIR2ndCascaded : public Base<IIR2ndCascaded>
+// Cascaded IIR 2nd order Direct-Form 2 Transposed filter with support for any input/output types
+template<typename Tinput = I::Real2D, typename Toutput = O::Real2D>
+class IIR2ndCascadedAnyType : public AsynchronousBase<IIR2ndCascadedAnyType<Tinput, Toutput>, Tinput, Toutput>
 {
-	friend Base<IIR2ndCascaded>;
+	friend Base<IIR2ndCascadedAnyType<Tinput, Toutput>, Tinput, Toutput>;
 
 public:
-	VectorAlgo<IIR2ndDF2Transposed> Filters;
+	VectorAlgo<IIR2ndDF2TransposedAnyType<Tinput, Toutput>> Filters;
 
 private:
 
 	struct Coefficients 
 	{
 		int Nsos = 4;
-		int NChannels = 2;
+		int BufferSize = 128;
+		int NChannelsIn = 2;
+		AsynchronousBufferType AsynchronousBuffer = VARIABLE_SIZE;
 	} C;
 
 	struct Parameters { float Gain = 1;  } P;
@@ -367,7 +393,8 @@ private:
 	{
 		Filters.resize(C.Nsos);
 		auto s = Filters[0].GetSetup();
-		s.Coefficients.NChannels = C.NChannels;
+		s.Coefficients.NChannelsIn = C.NChannelsIn;
+		s.Coefficients.BufferSize = C.BufferSize;
 		s.Coefficients.SampleRate = 0.f; // not used since P.FilterType == P.Custom
 		s.Parameters.FilterType = s.Parameters.Custom;
 		return Filters.Initialize(s);
@@ -391,48 +418,10 @@ private:
 
 };
 
-// ------------------ Streaming classes ------------------------------------------
-
-class IIR2ndDF2Streaming : public AsynchronousStreaming<IIR2ndDF2Streaming, IIR2ndDF2>
-{
-	friend AsynchronousStreaming<IIR2ndDF2Streaming, IIR2ndDF2>;
-
-	int CalculateLatencySamples() const { return 0; }
-	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
-
-	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
-	{
-		c.NChannels = nChannels;
-		c.SampleRate = sampleRate;
-		return bufferSizeExpected;
-	}
-};
-
-class IIR2ndDF2TransposedStreaming : public AsynchronousStreaming<IIR2ndDF2TransposedStreaming, IIR2ndDF2Transposed>
-{
-	friend AsynchronousStreaming<IIR2ndDF2TransposedStreaming, IIR2ndDF2Transposed>;
-
-	int CalculateLatencySamples() const { return 0; }
-	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
-
-	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
-	{
-		c.NChannels = nChannels;
-		c.SampleRate = sampleRate;
-		return bufferSizeExpected;
-	}
-};
-
-class IIR2ndCascadedStreaming : public AsynchronousStreaming<IIR2ndCascadedStreaming, IIR2ndCascaded>
-{
-	friend AsynchronousStreaming<IIR2ndCascadedStreaming, IIR2ndCascaded>;
-
-	int CalculateLatencySamples() const { return 0; }
-	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
-
-	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
-	{
-		c.NChannels = nChannels;
-		return bufferSizeExpected;
-	}
-};
+// Alias for specific types
+using IIR2ndDF2 = IIR2ndDF2AnyType<I::Real2D, O::Real2D>;
+using IIR2ndDF2Complex = IIR2ndDF2AnyType<I::Complex2D, O::Complex2D>;
+using IIR2ndDF2Transposed = IIR2ndDF2TransposedAnyType<I::Real2D, O::Real2D>;
+using IIR2ndDF2TransposedComplex = IIR2ndDF2TransposedAnyType<I::Complex2D, O::Complex2D>;
+using IIR2ndCascaded = IIR2ndCascadedAnyType<I::Real2D, O::Real2D>;
+using IIR2ndCascadedComplex = IIR2ndCascadedAnyType<I::Complex2D, O::Complex2D>;

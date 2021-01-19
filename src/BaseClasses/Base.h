@@ -1,3 +1,5 @@
+#pragma once
+#include "InputOutput.h"
 
 // Base defines the interface for an algorithm using CRTP and exposes:
 //	BASECLASSVERSION			- version number of base class
@@ -49,8 +51,7 @@ protected:
 	struct Setup
 	{
 		Setup() = default;
-		template<typename Tc, typename Tp>
-		Setup(const Tc& c, const Tp& p) { Coefficients = c; Parameters = p; }
+		Setup(const typename Talgo::Coefficients& c, const typename Talgo::Parameters& p) { Coefficients = c; Parameters = p; }
 		typename Talgo::Coefficients Coefficients;
 		typename Talgo::Parameters Parameters;
 	};

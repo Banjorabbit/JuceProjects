@@ -3,11 +3,26 @@
 #include "../Utilities/FormatHandling.h"
 #include "../Utilities/pffft.h"
 #include "../Utilities/ApproximationMath.h"
+#include "../Utilities/HelperFunctions.h"
 
 namespace UtilitiesTests
 {
 
 	LoggerOutput outputLog;
+
+	TEST_CLASS(HelperFunctionsTest)
+	{
+	public:
+		TEST_METHOD(AssignArrayTest)
+		{
+			int a[6];
+			AssignArray(a, { 1,2,3 });
+			AssignArray(a, { 4,5,6 }, 3);
+			AssignArray(a, { 7,8,9 }, 6); // this should be ignored since it is outside the bounds of a
+			Eigen::ArrayXi A = Eigen::Map<Eigen::ArrayXi>(a, 9);
+			outputLog << "see what is here: \n" << A << std::endl;
+		}
+	};
 
 	TEST_CLASS(ApproximationMathTest)
 	{

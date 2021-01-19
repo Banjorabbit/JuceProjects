@@ -5,6 +5,29 @@ namespace EigenTests
 {
 	TEST_CLASS(EigenMethodsTest)
 	{
+		TEST_METHOD(Index1DimensionIn2DimensionalArrayTest)
+		{
+			ArrayXXf A(3, 2);
+			A << 1.f, 2.f, 3.f, 4.f, 5.f, 6.f;
+			outputLog << "A: " << A << std::endl;
+			outputLog << "A(0): " << A(0) << ", A(1): " << A(1) << ", A(2): " << A(2) << ", A(3): " << A(3) << ", A(4): " << A(4) << ", A(5): " << A(5) << std::endl;
+		}
+
+		TEST_METHOD(MultiplyWithBool)
+		{
+			ArrayXf A(4);
+			A << 1.f, 2.f, 3.f, 4.f;
+			Array<bool, Dynamic, 1> B(4);
+			B << true, false, true, false;
+			outputLog << A * B.cast<float>() << std::endl;
+		}
+
+		TEST_METHOD(ZeroBeforeResize)
+		{
+			ArrayXXf A;
+			A.setZero(); // set to zero even though it does not have a size.
+		}
+
 		TEST_METHOD(SizesTest)
 		{
 			ArrayXXf A;
@@ -24,6 +47,12 @@ namespace EigenTests
 			//const Ref<const ArrayXXf>& testRef2 = Map< const Ref<const ArrayXXf>,0>(&testComplex.real()(0,0),0,0);
 			//decltype(testRef2.const_cast_derived()) test2 = test;
 			outputLog << testRef.const_cast_derived() << std::endl;
+		}
+		TEST_METHOD(AngleTest)
+		{
+			ArrayXf test(3);
+			test.setZero();
+			outputLog << "Angle: " << test.arg() << std::endl;
 		}
 	};
 

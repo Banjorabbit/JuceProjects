@@ -12,7 +12,7 @@ namespace { // empty namespace creates a unique LoggerOutput in each unittest .c
 	LoggerOutput outputLog;
 }
 
-namespace InterfaceTests // this namespace contains InterfaceTest and InterfaceStreamingTest and should be used in any unit test of an algorithm that derives from Base
+namespace InterfaceTests // this namespace contains InterfaceTest and InterfaceAsynchronousTest and should be used in any unit test of an algorithm that derives from Base
 {
 	template<typename Talgo>
 	bool VersionBaseTest()
@@ -161,142 +161,178 @@ namespace InterfaceTests // this namespace contains InterfaceTest and InterfaceS
 		}
 		return successFlag;
 	}
-
-	template<typename TalgoStreaming>
-	bool InitializeAsynchronousStreamingTest(I::Real2D xTime, float sampleRate, typename decltype(TalgoStreaming::Algo)::InputPersistent xPersistent)
+	
+	template<typename Talgo>
+	bool InitializeAsynchronousTest(typename Talgo::InputPersistent inputPersistent)
 	{
-		TalgoStreaming algoStreaming;
-		auto size = algoStreaming.GetStaticMemorySize();
+		Talgo algo;
+		auto c = algo.GetCoefficients();
+		outputLog << "InitializeAsynchronousTest: \n";
+		auto size = algo.GetStaticMemorySize();
 		outputLog << "Static memory size: " << size << " bytes.\n";
-		bool flag = algoStreaming.Initialize(static_cast<int>(xTime.rows()), static_cast<int>(xTime.cols()), sampleRate);
-		if (!flag) { outputLog << "InitializeAsynchronousStreamingTest failed: Initialize(input.rows(), input.cols(), sampleRate); returned false. \n\n"; return false; }
-		auto sizeInit = algoStreaming.GetAllocatedMemorySize();
+		bool flag = algo.Initialize(c);
+		if (!flag) { outputLog << "InitializeAsynchronousTest failed: Initialize(); returned false. \n\n"; return false; }
+		auto sizeInit = algo.GetAllocatedMemorySize();
 		outputLog << "Allocated memory size: " << sizeInit << " bytes.\n";
-		auto c = algoStreaming.Algo.GetCoefficients();
-		flag = algoStreaming.Initialize(static_cast<int>(xTime.rows()), static_cast<int>(xTime.cols()), sampleRate, c);
-		algoStreaming.Algo.SetPersistentInput(xPersistent);
-		if (!flag) { outputLog << "InitializeAsynchronousStreamingTest failed: Initialize(input.rows(), input.cols(), sampleRate, c) returned false. \n\n"; return false; }
-		auto sizeOut = algoStreaming.GetAllocatedMemorySize();
-		if (sizeInit == sizeOut) { outputLog << "InitializeAsynchronousStreamingTest successful.\n\n"; return true; }
-		else { outputLog << "InitializeAsynchronousStreamingTest failed.\n\n"; return false; }
+		flag = algo.InitializeAsynchronous(c, c.BufferSize);
+		if (!flag) { outputLog << "InitializeAsynchronousTest failed: InitializeAsynchronous(); returned false. \n\n"; return false; }
+		auto sizeAsync = algo.GetAllocatedMemorySize();
+		outputLog << "Allocated asynchronous memory size: " << sizeAsync << " bytes.\n";
+		if (sizeAsync <= sizeInit) { outputLog << "InitializeAsynchronousTest failed: Allocated memory did not increase. \n\n"; return false; }
+		flag = algo.Initialize(c);
+		if (!flag) { outputLog << "InitializeAsynchronousTest failed: Initialize(); returned false. \n\n"; return false; }
+		algo.SetPersistentInput(inputPersistent);
+		auto sizeOut = algo.GetAllocatedMemorySize();
+		if (sizeInit == sizeOut) { outputLog << "InitializeAsynchronousTest successful.\n\n"; return true; }
+		else { outputLog << "InitializeAsynchronousTest failed.\n\n"; return false; }
 	}
 
-	template<typename TalgoStreaming>
-	bool DifferentSizesAsynchronousStreamingTest(I::Real2D xTime, O::Real2D yTime, float sampleRate, typename decltype(TalgoStreaming::Algo)::InputPersistent xPersistent)
+	template<typename Talgo>
+	bool SynchronousAsynchronousTest(typename Talgo::InputPersistent inputPersistent)
 	{
-		TalgoStreaming algoStreaming;
+		outputLog << "SynchronousAsynchronousTest: \n";
+		Talgo algo, algoAsynchronous;
 
-		// setup to expect half size of actual size
-		bool flag = algoStreaming.Initialize(static_cast<int>(xTime.rows() / 2), static_cast<int>(xTime.cols()), sampleRate);
-		algoStreaming.Algo.SetPersistentInput(xPersistent);
-		if (!flag) { outputLog << "AsynchronousStreamingDifferentSizesTest failed: Initialize(input.rows(), input.cols()/2, sampleRate); returned false. \n\n"; return false; }
-		auto size = algoStreaming.GetAllocatedMemorySize();
+		
+		auto c = algo.GetCoefficients();
+		
+		// initialize asynchronously and find a bufferSize that works for asynchronous algo
+		auto flag = algoAsynchronous.InitializeAsynchronous(c, c.BufferSize);
+		c = algoAsynchronous.GetCoefficients();
+		flag &= algoAsynchronous.InitializeAsynchronous(c, c.BufferSize);
+
+		// match BufferSize in algo
+		flag &= algo.Initialize(c);
+
+		if ((algo.GetSynchronousProcessing() == false) | (algoAsynchronous.GetSynchronousProcessing() == false))
+		{
+			return false;
+		}
+		// define input/output
+		I::GetType<Talgo::Input>::type input(c.BufferSize, c.NChannelsIn);
+		O::GetType<Talgo::Output>::type output(c.BufferSize, algo.GetNChannelsOut());
+		O::GetType<Talgo::Output>::type outputAsynchronous(c.BufferSize, algoAsynchronous.GetNChannelsOut());
+		algoAsynchronous.SetPersistentInput(inputPersistent);
+		algo.SetPersistentInput(inputPersistent);
+
+		for (int i = 0; i < 100; i++)
+		{
+			input.setRandom();
+			// process algo asynchronous
+			algoAsynchronous.Process(input, outputAsynchronous);
+			// process algo
+			algo.Process(input, output);
+		}
+		
+		float error = (outputAsynchronous - output).abs2().sum();
+
+		outputLog << "Synchronous delay: (" << algo.GetLatencySamples() << ", " << algoAsynchronous.GetLatencySamples() << ") samples.\n";
+		outputLog << "Synchronous internal Buffersize: (" << algo.GetBufferSize() << ", " << algoAsynchronous.GetBufferSize() << ") samples.\n";
+		if (error == 0.f && flag) { outputLog << "SynchronousAsynchronousTest successful.\n\n"; return true; }
+		else { outputLog << "SynchronousAsynchronousTest failed.\n\n"; return false; }
+	}
+
+	template<typename Talgo>
+	bool DifferentSizesAsynchronousTest(typename Talgo::InputPersistent inputPersistent)
+	{
+		outputLog << "DifferentSizesAsynchronousTest: \n";
+		Talgo algo;
+		auto c = algo.GetCoefficients();
+		outputLog << "Default BufferSize: " << c.BufferSize << ".\n";
+		// define input/output
+		I::GetType<Talgo::Input>::type input2(c.BufferSize * 2, c.NChannelsIn);
+		I::GetType<Talgo::Input>::type input125(static_cast<int>(c.BufferSize * 1.25f), c.NChannelsIn);
+		O::GetType<Talgo::Output>::type output2(c.BufferSize * 2, algo.GetNChannelsOut());
+		O::GetType<Talgo::Output>::type output125(static_cast<int>(c.BufferSize * 1.25f), algo.GetNChannelsOut());
+		input2.setRandom();
+		input125.setRandom();
+
+		// setup to expect double internal buffer size
+		bool flag = algo.InitializeAsynchronous(c, c.BufferSize * 2);
+		algo.SetPersistentInput(inputPersistent);
+		if (!flag) { outputLog << "DifferentSizesAsynchronousTest failed: InitializAsynchronouse(c, c.BufferSize*2); returned false. \n\n"; return false; }
+		auto size = algo.GetAllocatedMemorySize();
 		double duration = 1e10;
 		int checkSum = 0;
 		for (auto i = 0; i < 100;i++)
 		{
 			auto start = std::chrono::steady_clock::now();
-			algoStreaming.Process(xTime, yTime);
+			algo.Process(input2, output2);
 			auto end = std::chrono::steady_clock::now();
 			auto time = std::chrono::duration<double, std::micro>(end - start).count();
 			duration = std::min(duration, time);
-			void *readPtr = &yTime;
-			for (auto j = 0; j < sizeof(decltype(yTime)); j++) { checkSum += static_cast<uint8_t*>(readPtr)[j]; } // checkSum ensures that all outputs are actually written
+			void *readPtr = &output2;
+			for (auto j = 0; j < sizeof(decltype(output2)); j++) { checkSum += static_cast<uint8_t*>(readPtr)[j]; } // checkSum ensures that all outputs are actually written
 		}
 		outputLog << "Execution time of processing 2x is: " << duration << "us.\n";
 		outputLog << "Checksum: " << checkSum << ".\n";
-		outputLog << "Delay: " << algoStreaming.GetLatencyTotalSamples() << " samples.\n";
-		outputLog << "Synchronous processing: " << algoStreaming.GetSynchronousProcessing() << ".\n";
-		outputLog << "Internal Buffersize: " << algoStreaming.GetBufferSizeInternal() << " samples.\n";
-		auto sizeOut = algoStreaming.GetAllocatedMemorySize();
-		if (size != sizeOut) { outputLog << "AsynchronousStreamingDifferentSizesTest failed.\n\n"; return false; }
+		outputLog << "Delay: " << algo.GetLatencySamplesAsynchronous() << " samples.\n";
+		outputLog << "Synchronous processing: " << algo.GetSynchronousProcessing() << ".\n";
+		outputLog << "Internal Buffersize: " << algo.GetBufferSize() << " samples.\n";
+		outputLog << "External Buffersize: " << algo.GetBufferSizeExternal() << " samples.\n";
+		auto sizeOut = algo.GetAllocatedMemorySize();
+		if (size != sizeOut) { outputLog << "DifferentSizesAsynchronousTest failed.\n\n"; return false; }
 
-		// setup to expect 1.25x size of actual size
-		flag = algoStreaming.Initialize(static_cast<int>(xTime.rows() * 1.25f), static_cast<int>(xTime.cols()), sampleRate);
-		algoStreaming.Algo.SetPersistentInput(xPersistent);
-		if (!flag) { outputLog << "AsynchronousStreamingDifferentSizesTest failed: Initialize(input.rows(), input.cols() * 1.25f); returned false. \n\n"; return false; }
-		size = algoStreaming.GetAllocatedMemorySize();
+		// setup to expect 1.25x internal buffer size
+		flag = algo.InitializeAsynchronous(c, static_cast<int>(c.BufferSize * 1.25f));
+		algo.SetPersistentInput(inputPersistent);
+		if (!flag) { outputLog << "DifferentSizesAsynchronousTest failed: InitializeAsynchronous(c, c.BufferSize * 1.25); returned false. \n\n"; return false; }
+		size = algo.GetAllocatedMemorySize();
 		duration = 1e10;
 		checkSum = 0;
 		for (auto i = 0; i < 100;i++)
 		{
 			auto start = std::chrono::steady_clock::now();
-			algoStreaming.Process(xTime, yTime);
+			algo.Process(input125, output125);
 			auto end = std::chrono::steady_clock::now();
 			auto time = std::chrono::duration<double, std::micro>(end - start).count();
 			duration = std::min(duration, time);
-			void *readPtr = &yTime;
-			for (auto j = 0; j < sizeof(decltype(yTime)); j++) { checkSum += static_cast<uint8_t*>(readPtr)[j]; } // checkSum ensures that all outputs are actually written
+			void *readPtr = &output125;
+			for (auto j = 0; j < sizeof(decltype(output125)); j++) { checkSum += static_cast<uint8_t*>(readPtr)[j]; } // checkSum ensures that all outputs are actually written
 		}
-		outputLog << "Minimum execution time of processing 0.8x is: " << duration << "us.\n";
+		outputLog << "Minimum execution time of processing 1.25x is: " << duration << "us.\n";
 		outputLog << "Checksum: " << checkSum << ".\n";
-		outputLog << "Delay: " << algoStreaming.GetLatencyTotalSamples() << " samples.\n";
-		outputLog << "Synchronous processing: " << algoStreaming.GetSynchronousProcessing() << ".\n";
-		outputLog << "Internal Buffersize: " << algoStreaming.GetBufferSizeInternal() << " samples.\n";
-		sizeOut = algoStreaming.GetAllocatedMemorySize();
+		outputLog << "Delay: " << algo.GetLatencySamplesAsynchronous() << " samples.\n";
+		outputLog << "Synchronous processing: " << algo.GetSynchronousProcessing() << ".\n";
+		outputLog << "Internal Buffersize: " << algo.GetBufferSize() << " samples.\n";
+		outputLog << "External Buffersize: " << algo.GetBufferSizeExternal() << " samples.\n";
+		sizeOut = algo.GetAllocatedMemorySize();
 
-		if (size == sizeOut) { outputLog << "AsynchronousStreamingDifferentSizesTest successful.\n\n"; return true; }
-		else { outputLog << "AsynchronousStreamingDifferentSizesTest failed.\n\n"; return false; }
+		if (size == sizeOut) { outputLog << "DifferentSizesAsynchronousTest successful.\n\n"; return true; }
+		else { outputLog << "DifferentSizesAsynchronousTest failed.\n\n"; return false; }
 	}
 
-	template<typename TalgoStreaming>
-	bool SynchronousStreamingTest(I::Real2D xTime, O::Real2D yTime, float sampleRate, typename decltype(TalgoStreaming::Algo)::InputPersistent xPersistent)
+	template<typename Talgo>
+	bool AlgorithmInterfaceAsynchronousTest()
 	{
-		// find a bufferSize that works for algoStreaming
-		TalgoStreaming algoStreaming;
-		ArrayXXf input = xTime;
-		ArrayXXf output = yTime;
-		bool flag = algoStreaming.Initialize(static_cast<int>(input.rows()), static_cast<int>(input.cols()), sampleRate);
-		auto c = algoStreaming.Algo.GetCoefficients(); // get updated coefficients
-		auto bufferSizeNew = algoStreaming.GetBufferSizeInternal();
-		input.resize(bufferSizeNew, input.cols());
+		I::GetType<Talgo::InputPersistent>::type inputPersistent; // this variable is an empty Eigen array that is only used to match the number of arguments.
+		return AlgorithmInterfaceAsynchronousTest<Talgo>(inputPersistent);
+	}
+
+	template<typename Talgo>
+	bool AlgorithmInterfaceAsynchronousTest(typename Talgo::InputPersistent inputPersistent)
+	{
+		Talgo algo;
+		auto c = algo.GetCoefficients();
+		I::GetType<Talgo::Input>::type input(c.BufferSize, c.NChannelsIn);
+		O::GetType<Talgo::Output>::type output(c.BufferSize, algo.GetNChannelsOut());
 		input.setRandom();
-		output.resize(bufferSizeNew, output.cols());
-
-		// process algoStreaming
-		flag &= algoStreaming.Initialize(static_cast<int>(input.rows()), static_cast<int>(input.cols()), sampleRate, c);
-		algoStreaming.Algo.SetPersistentInput(xPersistent);
-		algoStreaming.Process(input, output);
-		ArrayXXf outputStreaming = output;
-
-		// process Algo
-		decltype(TalgoStreaming::Algo) algo;
-		flag &= algo.Initialize(c);
-		algo.SetPersistentInput(xPersistent);
-		algo.Process(input, output);
-
-		float error = (outputStreaming - output).abs2().sum();
-
-		outputLog << "Synchronous delay: " << algoStreaming.GetLatencyTotalSamples() << " samples.\n";
-		outputLog << "Synchronous processing: " << algoStreaming.GetSynchronousProcessing() << ".\n";
-		outputLog << "Synchronous internal Buffersize: " << algoStreaming.GetBufferSizeInternal() << " samples.\n";
-		if (error == 0.f && flag) { outputLog << "SynchronousStreamingTest successful.\n\n"; return true; }
-		else { outputLog << "SynchronousStreamingTest failed.\n\n"; return false; }
-	}
-
-	template<typename TalgoStreaming>
-	bool AlgorithmInterfaceStreamingTest(I::Real2D xTime, O::Real2D yTime, float sampleRate)
-	{
-		I::GetType<typename decltype(TalgoStreaming::Algo)::InputPersistent>::type temp; // this variable is an empty Eigen array that is only used to match the number of arguments.
-		return AlgorithmInterfaceStreamingTest<TalgoStreaming>(xTime, yTime, sampleRate, temp);
-	}
-
-	template<typename TalgoStreaming>
-	bool AlgorithmInterfaceStreamingTest(I::Real2D xTime, O::Real2D yTime, float sampleRate, typename decltype(TalgoStreaming::Algo)::InputPersistent xPersistent)
-	{
-		auto successFlag = AlgorithmInterfaceTest<decltype(TalgoStreaming::Algo)>(xTime, yTime, xPersistent);
+		outputLog << "\n--------------------------------------------------------------------------------------\n";
+		outputLog << "AlgorithmInterfaceTest: \n";
+		auto successFlag = AlgorithmInterfaceTest<Talgo>(input, output, inputPersistent);
 		outputLog << "\n";
-		successFlag &= InitializeAsynchronousStreamingTest<TalgoStreaming>(xTime, sampleRate, xPersistent);
-		successFlag &= SynchronousStreamingTest<TalgoStreaming>(xTime, yTime, sampleRate, xPersistent);
-		successFlag &= DifferentSizesAsynchronousStreamingTest<TalgoStreaming>(xTime, yTime, sampleRate, xPersistent);
+		successFlag &= InitializeAsynchronousTest<Talgo>(inputPersistent);
+		successFlag &= SynchronousAsynchronousTest<Talgo>(inputPersistent);
+		successFlag &= DifferentSizesAsynchronousTest<Talgo>(inputPersistent);
 		if (successFlag)
 		{
-			outputLog << "AlgorithmInterfaceStreamingTest successful." << std::endl;
+			outputLog << "AlgorithmInterfaceTest successful." << std::endl;
 		}
 		else
 		{
-			outputLog << "AlgorithmInterfaceStreamingTest failed." << std::endl;
+			outputLog << "AlgorithmInterfaceTest failed." << std::endl;
 		}
+		outputLog << "\n**************************************************************************************\n" << std::endl;
 		return successFlag;
 	}
 }

@@ -1,3 +1,4 @@
+#pragma once
 #include "BaseClasses/PureCRTP.h"
 
 struct O::FilterMinMax

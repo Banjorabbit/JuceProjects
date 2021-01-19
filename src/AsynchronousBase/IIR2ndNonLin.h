@@ -2,13 +2,15 @@
 #include "../BaseClasses/PureCRTP.h"
 #include "../Utilities/ApproximationMath.h"
 
-class IIR2ndNonLinLowpass : public Base<IIR2ndNonLinLowpass>
+class IIR2ndNonLinLowpass : public AsynchronousBase<IIR2ndNonLinLowpass>
 {
 	friend Base<IIR2ndNonLinLowpass>;
 
 	struct Coefficients
 	{
-		int NChannels = 2;
+		AsynchronousBufferType AsynchronousBuffer = VARIABLE_SIZE;
+		int NChannelsIn = 2;
+		int BufferSize = 128;
 		float SampleRate = 16e3f;
 	} C;
 
@@ -33,11 +35,11 @@ class IIR2ndNonLinLowpass : public Base<IIR2ndNonLinLowpass>
 		}
 		bool InitializeMemory(const Coefficients& c)
 		{
-			XOld.resize(c.NChannels);
-			Y1Z.resize(c.NChannels);
-			Y2Z.resize(c.NChannels);
-			Tanh2.resize(c.NChannels);
-			Tanh1.resize(c.NChannels);
+			XOld.resize(c.NChannelsIn);
+			Y1Z.resize(c.NChannelsIn);
+			Y2Z.resize(c.NChannelsIn);
+			Tanh2.resize(c.NChannelsIn);
+			Tanh1.resize(c.NChannelsIn);
 			return true;
 		}
 		size_t GetAllocatedMemorySize() const
@@ -48,19 +50,18 @@ class IIR2ndNonLinLowpass : public Base<IIR2ndNonLinLowpass>
 			size += Tanh2.GetAllocatedMemorySize();
 			size += Tanh1.GetAllocatedMemorySize();
 			return size;
-
 		}
 		void OnParameterChange(const Parameters& p, const Coefficients& c)
 		{
-			g = std::min(0.75f, TanApprox(static_cast<float>(PI) * p.Cutoff / (2 * c.SampleRate))); // hardcoded to 2x oversampling so samplerate is 2*c.SampleRate. Limited to avoid numerical problems.
+			g = std::min(0.75f, TanApprox(static_cast<float>(PI) * p.Cutoff / (2 * c.SampleRate))); // hardcoded to 2x oversampling so samplerate is 2*c.SampleRate. Limited to avoid aliasing.
 		}
 	} D;
 
 	void ProcessOn(Input xTime, Output yTime)
 	{
-		for (auto sample = 0; sample < xTime.rows(); sample++)
+		for (auto sample = 0; sample < C.BufferSize; sample++)
 		{
-			for (auto channel = 0; channel < xTime.cols(); channel++) // for some strange reason, profiling is faster when iterating accross column before row...
+			for (auto channel = 0; channel < C.NChannelsIn; channel++) // for some strange reason, profiling is faster when iterating accross column before row...
 			{
 				float v1Iter, v2Iter;
 				// hardcoded to 2x oversampling with simple average as anti-aliasing filter
@@ -99,13 +100,15 @@ class IIR2ndNonLinLowpass : public Base<IIR2ndNonLinLowpass>
 	void ProcessOff(Input xTime, Output yTime) { yTime = xTime; }
 };
 
-class IIR2ndNonLinBandpass : public Base<IIR2ndNonLinBandpass>
+class IIR2ndNonLinBandpass : public AsynchronousBase<IIR2ndNonLinBandpass>
 {
 	friend Base<IIR2ndNonLinBandpass>;
 
 	struct Coefficients
 	{
-		int NChannels = 2;
+		AsynchronousBufferType AsynchronousBuffer = VARIABLE_SIZE;
+		int NChannelsIn = 2;
+		int BufferSize = 128;
 		float SampleRate = 16e3f;
 	} C;
 
@@ -132,13 +135,13 @@ class IIR2ndNonLinBandpass : public Base<IIR2ndNonLinBandpass>
 		}
 		bool InitializeMemory(const Coefficients& c)
 		{
-			XOld.resize(c.NChannels);
-			Y1Z.resize(c.NChannels);
-			Y2Z.resize(c.NChannels);
-			Y3Z.resize(c.NChannels);
-			Tanh3.resize(c.NChannels);
-			Tanh2.resize(c.NChannels);
-			Tanh1.resize(c.NChannels);
+			XOld.resize(c.NChannelsIn);
+			Y1Z.resize(c.NChannelsIn);
+			Y2Z.resize(c.NChannelsIn);
+			Y3Z.resize(c.NChannelsIn);
+			Tanh3.resize(c.NChannelsIn);
+			Tanh2.resize(c.NChannelsIn);
+			Tanh1.resize(c.NChannelsIn);
 			return true;
 		}
 		size_t GetAllocatedMemorySize() const
@@ -155,15 +158,15 @@ class IIR2ndNonLinBandpass : public Base<IIR2ndNonLinBandpass>
 		}
 		void OnParameterChange(const Parameters& p, const Coefficients& c)
 		{
-			g = std::min(0.75f, TanApprox(static_cast<float>(PI) * p.Cutoff / (2 * c.SampleRate))); // hardcoded to 2x oversampling so samplerate is 2*c.SampleRate. Limited to avoid numerical problems.
+			g = std::min(0.75f, TanApprox(static_cast<float>(PI) * p.Cutoff / (2 * c.SampleRate))); // hardcoded to 2x oversampling so samplerate is 2*c.SampleRate. Limited to avoid aliasing.
 		}
 	} D;
 
 	void ProcessOn(Input xTime, Output yTime)
 	{
-		for (auto sample = 0; sample < xTime.rows(); sample++)
+		for (auto sample = 0; sample < C.BufferSize; sample++)
 		{
-			for (auto channel = 0; channel < xTime.cols(); channel++) // for some strange reason, profiling is faster when iterating accross column before row...
+			for (auto channel = 0; channel < C.NChannelsIn; channel++) // for some strange reason, profiling is faster when iterating accross column before row...
 			{
 				float v1Iter = .0f, v2Iter = .0f, v3Iter = .0f;
 				// hardcoded to 2x oversampling with simple average as anti-aliasing filter
@@ -207,34 +210,4 @@ class IIR2ndNonLinBandpass : public Base<IIR2ndNonLinBandpass>
 	}
 
 	void ProcessOff(Input xTime, Output yTime) { yTime = xTime; }
-};
-
-class IIR2ndNonLinLowpassStreaming : public AsynchronousStreaming<IIR2ndNonLinLowpassStreaming, IIR2ndNonLinLowpass>
-{
-	friend AsynchronousStreaming<IIR2ndNonLinLowpassStreaming, IIR2ndNonLinLowpass>;
-
-	int CalculateLatencySamples() const { return 0; }
-	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
-
-	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
-	{
-		c.NChannels = nChannels;
-		c.SampleRate = sampleRate;
-		return bufferSizeExpected;
-	}
-};
-
-class IIR2ndNonLinBandpassStreaming : public AsynchronousStreaming<IIR2ndNonLinBandpassStreaming, IIR2ndNonLinBandpass>
-{
-	friend AsynchronousStreaming<IIR2ndNonLinBandpassStreaming, IIR2ndNonLinBandpass>;
-
-	int CalculateLatencySamples() const { return 0; }
-	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
-
-	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
-	{
-		c.NChannels = nChannels;
-		c.SampleRate = sampleRate;
-		return bufferSizeExpected;
-	}
 };

@@ -1,8 +1,9 @@
+#pragma once
 #include "../BaseClasses/PureCRTP.h"
 #include "../FilterMinMax.h"
 #include "../CircBuffer.h"
 
-class LimiterHard : public Base<LimiterHard>
+class LimiterHard : public AsynchronousBase<LimiterHard>
 {
 	friend Base<LimiterHard>;
 
@@ -18,7 +19,8 @@ private:
 		float LookAheadMS = 8.f;
 		float HoldTimeMS = 12.f;
 		int BufferSize = 128;
-		int NChannels = 2;
+		int NChannelsIn = 2;
+		AsynchronousBufferType AsynchronousBuffer = VARIABLE_SIZE;
 	} C;
 
 	struct Parameters 
@@ -26,6 +28,7 @@ private:
 		float ReleaseTConstant = .2f;
 		float PreGain = 2.f;
 		float PostGain = 1.f;
+		float Threshold = 1.f;
 	} P;
 
 	struct Data 
@@ -45,7 +48,7 @@ private:
 		{
 			LengthMax = static_cast<int>((c.LookAheadMS + c.HoldTimeMS) / 1000.f * c.SampleRate);
 			LengthDelay = static_cast<int>(c.LookAheadMS / 1000.f * c.SampleRate);
-			DelayLine.resize(LengthDelay, c.NChannels);
+			DelayLine.resize(LengthDelay, c.NChannelsIn);
 			if (c.BufferSize < LengthDelay)
 			{
 				size1 = c.BufferSize;
@@ -94,14 +97,14 @@ private:
 		D.DelayLine.topRows(D.size3) = D.DelayLine.bottomRows(D.size3);
 		D.DelayLine.bottomRows(D.size4) = xPre.bottomRows(D.size4);
 
-		// find max(abs(xTime)) larger than 1 over LookAhead + HoldTime
+		// find max(abs(xTime)) larger than Threshold over LookAhead + HoldTime
 		Eigen::ArrayXf xMax(C.BufferSize);
-		FindMax.Process(xPre.abs().rowwise().maxCoeff().max(1.f), xMax);
+		FindMax.Process(xPre.abs().rowwise().maxCoeff().max(P.Threshold), xMax);
 
 		// calculate desired output gain
 		for (auto i = 0; i < C.BufferSize; i++)
 		{
-			float gain = 1.f / xMax(i);
+			float gain = P.Threshold / xMax(i);
 			D.GainAttackSmooth += D.AttackDown * (gain*.95f - D.GainAttackSmooth); // 95% of final value is reached after 3 time constants
 			D.GainAttackSmooth = std::max(D.GainAttackSmooth, gain); // if no reduction, GainAttackSmooth should be 1
 			D.Gain = std::min(D.GainAttackSmooth, D.Gain*D.ReleaseUp);
@@ -112,21 +115,5 @@ private:
 	void ProcessOff(Input xTime, Output yTime)
 	{
 		yTime = xTime;
-	}
-};
-
-class LimiterHardStreaming : public AsynchronousStreaming<LimiterHardStreaming, LimiterHard>
-{
-	friend AsynchronousStreaming<LimiterHardStreaming, LimiterHard>;
-
-	int CalculateLatencySamples() const { return Algo.GetLatencySamples(); }
-	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
-
-	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
-	{
-		c.NChannels = nChannels;
-		c.SampleRate = sampleRate;
-		c.BufferSize = bufferSizeExpected;
-		return c.BufferSize;
 	}
 };

@@ -23,6 +23,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\AudioFile.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\fastonebigheader.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\FormatHandling.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\HelperFunctions.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\pffft.h" />
   </ItemGroup>
 </Project>

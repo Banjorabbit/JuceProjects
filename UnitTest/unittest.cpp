@@ -9,6 +9,9 @@
 #include "../src/FilterMinMax.h"
 #include "../src/FIRMinPhase.h"
 #include "../src/InterpolationCubic.h"
+#include "../src/SpectralMass.h"
+#include "../src/StateVariableFilter.h"
+#include "../src/ToeplitzSolver.h"
 #include "../src/Upsampling2XCubic.h"
 #include "../Utilities/AudioFile.h"
 
@@ -717,6 +720,95 @@ namespace Algorithms
 		}
 	};
 
+	TEST_CLASS(SpectralMassTest)
+	{
+		TEST_METHOD(Interface)
+		{
+			outputLog << "Running SpectralMassTest->Interface.\n";
+			SpectralMass spectralMass;
+			auto c = spectralMass.GetCoefficients();
+			ArrayXXf input(128, c.NChannels);
+			input.setRandom();
+			ArrayXXf output(128, c.NChannels);
+			auto flag = AlgorithmInterfaceTest<SpectralMass>(input, output);
+			Assert::IsTrue(flag);
+		}
+
+		TEST_METHOD(CalculationTest)
+		{
+			outputLog << "Running SpectralMassTest->CalculationTest.\n";
+			SpectralMass spectralMass;
+			auto s = spectralMass.GetSetup();
+			s.Coefficients.NChannels = 1;
+			s.Coefficients.SampleRate = 44100.f;
+			s.Parameters.SmoothTConstant = 1e-40f;
+			spectralMass.Initialize(s);
+			ArrayXf input(16), output(16), outputRef(16);
+			input << -1.f, 1.f, -1.f, 1.f, -1.f, 1.f, -1.f, 1.f, 1.f, -1.f, -1.f, 1.f, 1.f, -1.f, -1.f, 1.f;
+			outputRef << 1000, 22050, 22050, 22050, 22050, 22050, 22050, 22050, 22050, 11025, 11025, 11025, 11025, 11025, 11025, 11025;
+			spectralMass.Process(input, output);
+			float error = (output - outputRef).abs2().sum();
+			Assert::IsTrue(error == 0.f);
+
+			// run again
+			spectralMass.Process(input, output);
+			outputRef(0) = 22050;
+			error = (output - outputRef).abs2().sum();
+			Assert::IsTrue(error == 0.f);
+		}
+	};
+
+	TEST_CLASS(StateVariableFilterTest)
+	{
+		TEST_METHOD(Interface)
+		{
+			StateVariableFilter filter;
+			auto c = filter.GetCoefficients();
+			auto bufferSize = 128;
+			ArrayXXf input(bufferSize, c.NChannels), BandPass(bufferSize, c.NChannels), HighPass(bufferSize, c.NChannels), LowPass(bufferSize, c.NChannels);
+			input.setRandom();
+			O::StateVariableFilter output = { HighPass, LowPass, BandPass };
+			auto flag = AlgorithmInterfaceTest<StateVariableFilter>(input, output);
+			Assert::IsTrue(flag);
+		}
+	};
+
+	TEST_CLASS(ToeplitzSolverTest)
+	{
+		TEST_METHOD(Interface)
+		{
+			outputLog << "Running ToeplitzSolverTest->Interface.\n";
+			ToeplitzSolver toeplitzSolver;
+			ArrayXcf aToeplitz(32);
+			ArrayXXcf bRightHand(32, 8);
+			I::ToeplitzSolver input = { aToeplitz, bRightHand };
+			ArrayXXcf output(32, 8);
+			auto flag = AlgorithmInterfaceTest<ToeplitzSolver>(input, output);
+			Assert::IsTrue(flag);
+		}
+
+		TEST_METHOD(CalculationTest)
+		{
+			using namespace std::literals;
+
+			outputLog << "running ToeplitzSolverTest->CalculationTest.\n";
+			ToeplitzSolver toeplitzSolver;
+			ArrayXcf aToeplitz(2);
+			ArrayXXcf bRightHand(2, 3);
+			aToeplitz << 0.4882f - 0.1961if, -0.1774f + 1.4193if;
+			bRightHand << -0.2103f + 0.2486if, 0.6536f - 0.0990if, -0.7586f + 0.6976if, -0.3118f - 0.2045if, -0.7980f - 0.8078if, -0.3473f - 0.6120if;
+			I::ToeplitzSolver input = { aToeplitz, bRightHand };
+			ArrayXXcf output(2, 3);
+			ArrayXXcf outputRef(2, 3);
+			outputRef << 0.1825f - 0.3271if, 0.4846f - 0.4906if, 0.5752f - 0.5329if, 0.3284f + 0.1247if, 0.1188f - 0.3764if, 0.8237f + 0.5558if;
+			toeplitzSolver.Initialize();
+			toeplitzSolver.Process(input, output);
+			float error = (output - outputRef).abs2().sum();
+			outputLog << "Error: " << error << std::endl;
+			Assert::IsTrue(error < 1e-7f);
+		}
+	};
+
 	TEST_CLASS(Upsampling2XCubicTest)
 	{
 		TEST_METHOD(Interface2x)
@@ -738,6 +830,23 @@ namespace Algorithms
 			input.setRandom();
 			auto flag = AlgorithmInterfaceTest<UpsamplingPower2Cubic>(input, output);
 			Assert::IsTrue(flag);
+		}
+
+		TEST_METHOD(UpsampleImpulse)
+		{
+			outputLog << "Running Upsampling2XCubicTest->UpsampleImpulse.\n";
+			UpsamplingPower2Cubic upsampling;
+			auto p = upsampling.GetParameters();
+			p.UpsamplingFactorPow2 = 3;
+			upsampling.SetParameters(p);
+			upsampling.Initialize();
+
+			ArrayXf input(8);
+			input.setZero();
+			input(3) = 1;
+			ArrayXf output(8 * 8);
+			upsampling.Process(input, output);
+			outputLog << "Output: " << output << std::endl;
 		}
 	};
 }

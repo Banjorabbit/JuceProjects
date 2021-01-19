@@ -6,7 +6,7 @@
 
 // TODO: Support for more than 1 channel
 // TODO: Investigate time-varying P.StretchFactor. Consider replacing D.OutBuffer with circularBuffer (CircBuffer.h)
-class PitchShift : public Base<PitchShift>
+class PitchShift : public AsynchronousBase<PitchShift>
 {
 	friend Base<PitchShift>;
 
@@ -18,10 +18,41 @@ public:
 
 	int GetLatencySamples() const { return D.LatencySamples; }
 
+	auto GetAsynchronousCoefficients(const std::vector<int> bufferSizesSuggested) const
+	{
+		Coefficients c = C;
+		auto bufferSizes = bufferSizesSuggested;
+			   
+		// start suggestion should be size 2^x close to 3ms
+		int goodSize = static_cast<int>(powf(2, std::round(std::log2(.003f*c.SampleRate))));
+		if (static_cast<float>(bufferSizesSuggested[0]) / goodSize < 0.666f || static_cast<float>(bufferSizesSuggested[0]) / goodSize > 1.5f)
+		{
+			bufferSizes.insert(bufferSizes.begin(), goodSize);
+		}
+		else
+		{
+			bufferSizes.insert(bufferSizes.begin() + 1, goodSize);
+		}
+
+		// return with first value that is a valid size
+		for (auto& size : bufferSizes)
+		{
+			if (FFTReal::IsFFTSizeValid(size * 4))
+			{
+				c.BufferSize = size;
+				return c; // return with first match
+			}
+		}
+		return c; // failed to find valid BufferSize so use default
+	}
+
 private:
 	struct Coefficients
 	{
 		int BufferSize = 128;
+		ConstrainedType<int> NChannelsIn = { 1, 1, 1 };
+		float SampleRate = 44.1e3f;
+		AsynchronousBufferType AsynchronousBuffer = VARIABLE_SIZE;
 	} C;
 
 	struct Parameters
@@ -81,7 +112,7 @@ private:
 		auto flag = InterpolateSpectrogram.Initialize(cI);
 
 		auto sF = Filterbank.GetSetup();
-		sF.Coefficients.NChannels = 1;
+		sF.Coefficients.NChannels = C.NChannelsIn;
 		sF.Coefficients.FrameSize = D.FFTSize;
 		sF.Coefficients.FFTSize = D.FFTSize;
 		sF.Coefficients.BufferSize = C.BufferSize;
@@ -89,7 +120,7 @@ private:
 		flag &= Filterbank.Initialize(sF);
 
 		auto sFI = FilterbankInverse.GetSetup();
-		sFI.Coefficients.NChannels = 1;
+		sFI.Coefficients.NChannels = C.NChannelsIn;
 		sFI.Coefficients.FrameSize = D.FFTSize;
 		sFI.Coefficients.FFTSize = D.FFTSize;
 		sFI.Coefficients.BufferSize = C.BufferSize;
@@ -131,42 +162,4 @@ private:
 	}
 
 	void ProcessOff(Input xTime, Output yTime) { yTime = xTime; }
-};
-
-class PitchShiftStreaming : public AsynchronousStreaming<PitchShiftStreaming, PitchShift>
-{
-	friend AsynchronousStreaming<PitchShiftStreaming, PitchShift>;
-
-	// latency is equal to reset-value of D.IndexOut 
-	int CalculateLatencySamples() const { return Algo.GetLatencySamples(); }
-	int CalculateNChannelsOut(const int nChannels) const { return nChannels; }
-
-	int UpdateCoefficients(decltype(Algo.GetCoefficients())& c, const float sampleRate, const int nChannels, const int bufferSizeExpected, std::vector<int> bufferSizesSuggested) const
-	{
-		if (nChannels > 1) { return -1; }
-
-		// start suggestion should be size 2^x close to 3ms
-		int goodSize = static_cast<int>(powf(2, std::round(std::log2(.003f*sampleRate))));
-		if (static_cast<float>(bufferSizesSuggested[0]) / goodSize < 0.666f || static_cast<float>(bufferSizesSuggested[0]) / goodSize > 1.5f)
-		{
-			bufferSizesSuggested.insert(bufferSizesSuggested.begin(), goodSize);
-		}
-		else
-		{
-			bufferSizesSuggested.insert(bufferSizesSuggested.begin() + 1, goodSize);
-		}
-		bufferSizesSuggested.push_back(c.BufferSize);
-
-		// return with first value that is a valid size
-		for (auto& size : bufferSizesSuggested)
-		{
-			if (FFTReal::IsFFTSizeValid(size * 4))
-			{
-				c.BufferSize = size;
-				return size;
-			}
-		}
-		// failed to set up correctly
-		return -1;
-	}
 };

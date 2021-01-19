@@ -22,6 +22,7 @@ private:
 	{
 		enum WindowTypes { HannWindow , Rectangular};
 		WindowTypes WindowType = HannWindow;
+		float Gain = 1;
 	} P;
 
 	struct Data
@@ -64,6 +65,7 @@ private:
 			default:
 				Window.setZero();
 			}
+			Window *= p.Gain;
 		}
 	} D;
 
@@ -113,6 +115,7 @@ private:
 	{
 		enum WindowTypes { HannWindow , Rectangular};
 		WindowTypes WindowType = HannWindow;
+		float Gain = 1;
 	} P;
 
 	struct Data
@@ -155,6 +158,7 @@ private:
 			default:
 				Window.setZero();
 			}
+			Window *= p.Gain;
 		}
 	} D;
 
