@@ -98,7 +98,10 @@ void SeparateTonalTextureTransientAudioProcessor::prepareToPlay (double sampleRa
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
 	auto c = Separator.GetCoefficients();
-	
+	c.NChannelsIn = getNumInputChannels();
+	c.SampleRate = static_cast<float>(sampleRate);
+	Separator.InitializeAsynchronous(c, samplesPerBlock);
+	setLatencySamples(Separator.GetLatencySamplesAsynchronous());
 }
 
 void SeparateTonalTextureTransientAudioProcessor::releaseResources()
