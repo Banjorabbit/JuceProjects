@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2017
+
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SeparateTonalTextureTransient - VST3", "SeparateTonalTextureTransient_VST3.vcxproj", "{63324167-48D5-EB55-BD6F-B2CDEEF27822}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2E5D1D60-BBC9-B3C1-34DB-666F0FD0128A} = {2E5D1D60-BBC9-B3C1-34DB-666F0FD0128A}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SeparateTonalTextureTransient - Shared Code", "SeparateTonalTextureTransient_SharedCode.vcxproj", "{2E5D1D60-BBC9-B3C1-34DB-666F0FD0128A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{63324167-48D5-EB55-BD6F-B2CDEEF27822}.Debug|x64.ActiveCfg = Debug|x64
+		{63324167-48D5-EB55-BD6F-B2CDEEF27822}.Debug|x64.Build.0 = Debug|x64
+		{63324167-48D5-EB55-BD6F-B2CDEEF27822}.Release|x64.ActiveCfg = Release|x64
+		{63324167-48D5-EB55-BD6F-B2CDEEF27822}.Release|x64.Build.0 = Release|x64
+		{2E5D1D60-BBC9-B3C1-34DB-666F0FD0128A}.Debug|x64.ActiveCfg = Debug|x64
+		{2E5D1D60-BBC9-B3C1-34DB-666F0FD0128A}.Debug|x64.Build.0 = Debug|x64
+		{2E5D1D60-BBC9-B3C1-34DB-666F0FD0128A}.Release|x64.ActiveCfg = Release|x64
+		{2E5D1D60-BBC9-B3C1-34DB-666F0FD0128A}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
