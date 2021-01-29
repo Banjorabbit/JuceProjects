@@ -57,18 +57,21 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 	enum SelectOutput { TONAL, TEXTURE, TRANSIENT, SUM};
+	float tonalThreshold;
 	void UpdateParameters(const SelectOutput& outputSelector)
 	{
 		auto p = Separator.GetParameters();
 		switch (outputSelector)
 		{
-		case TONAL: p.OutputSelector = p.TONAL;
-		case TEXTURE: p.OutputSelector = p.TEXTURE;
-		case TRANSIENT: p.OutputSelector = p.TRANSIENT;
-		case SUM: p.OutputSelector = p.SUM;
+		case TONAL: p.OutputSelector = p.TONAL;break;
+		case TEXTURE: p.OutputSelector = p.TEXTURE;break;
+		case TRANSIENT: p.OutputSelector = p.TRANSIENT;break;
+		case SUM: p.OutputSelector = p.SUM;break;
 		}
-		
 		Separator.SetParameters(p);
+		auto pTonal = Separator.TonalSeparator.TonalDetector.GetParameters();
+		pTonal.TonalThreshold = tonalThreshold;
+		Separator.TonalSeparator.TonalDetector.SetParameters(pTonal);		
 	}
 private:
 	SeparateTonalTextureTransient Separator;

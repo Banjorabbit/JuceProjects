@@ -18,6 +18,21 @@ SeparateTonalTextureTransientAudioProcessorEditor::SeparateTonalTextureTransient
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (400, 300);
+	selectOutput.setSliderStyle(Slider::LinearBarVertical);
+	selectOutput.setRange(.0f, 3.f, 1.f);
+	selectOutput.setTextValueSuffix("Output Selector");
+	selectOutput.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
+	//selectOutput.setValue(processor.Pitch);
+	addAndMakeVisible(&selectOutput);
+	selectOutput.addListener(this);
+
+	tonalThreshold.setSliderStyle(Slider::LinearBarVertical);
+	tonalThreshold.setRange(0.f, 5.f, .1f);
+	tonalThreshold.setTextValueSuffix("Tonal Threshold");
+	tonalThreshold.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
+	//selectOutput.setValue(processor.Pitch);
+	addAndMakeVisible(&tonalThreshold);
+	tonalThreshold.addListener(this);
 }
 
 SeparateTonalTextureTransientAudioProcessorEditor::~SeparateTonalTextureTransientAudioProcessorEditor()
@@ -39,4 +54,16 @@ void SeparateTonalTextureTransientAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
+	selectOutput.setBounds(40, 30, 20, getHeight() - 60);
+	tonalThreshold.setBounds(60, 30, 20, getHeight() - 60);
+}
+void SeparateTonalTextureTransientAudioProcessorEditor::sliderValueChanged(Slider * slider)
+{
+	processor.tonalThreshold = tonalThreshold.getValue();
+	SeparateTonalTextureTransientAudioProcessor::SelectOutput select = SeparateTonalTextureTransientAudioProcessor::TRANSIENT;
+	if (selectOutput.getValue() < 1.f) { select = SeparateTonalTextureTransientAudioProcessor::TONAL; }
+	else if (selectOutput.getValue() < 2.f) { select = SeparateTonalTextureTransientAudioProcessor::TEXTURE; }
+	else if (selectOutput.getValue() < 3.f) { select = SeparateTonalTextureTransientAudioProcessor::TRANSIENT; }
+	else if (selectOutput.getValue() < 4.f) { select = SeparateTonalTextureTransientAudioProcessor::SUM; }
+	processor.UpdateParameters(select);
 }

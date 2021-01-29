@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="B1yp1P" name="SeparateTonalTextureTransient" projectType="audioplug"
-              jucerVersion="5.4.7" pluginFormats="buildVST3" pluginChannelConfigs="{1,1}, {2,2}"
+              jucerVersion="5.4.7" pluginFormats="buildVST3" pluginChannelConfigs="{1,1}"
               headerPath="../../../../PureCRTP/eigen&#10;../../../../PureCRTP/src/AsynchronousBase">
   <MAINGROUP id="bWk46w" name="SeparateTonalTextureTransient">
     <GROUP id="{877DFE0E-D5AE-0B95-5F0E-A5A5882BCE34}" name="Source">
+      <FILE id="Ch3Qop" name="pffft.c" compile="1" resource="0" file="../../PureCRTP/Utilities/pffft.c"/>
       <FILE id="wIUcFK" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="pJuiI4" name="PluginProcessor.h" compile="0" resource="0"
