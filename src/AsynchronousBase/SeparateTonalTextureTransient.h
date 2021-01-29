@@ -63,7 +63,7 @@ private:
 	{
 		auto sTonal = TonalSeparator.GetSetup();
 		sTonal.Coefficients.BufferSize = C.BufferSize;
-		sTonal.Coefficients.FFTSize = C.FFTSize;
+		sTonal.Coefficients.FrameSize = C.FFTSize;
 		sTonal.Coefficients.NChannelsIn = C.NChannelsIn;
 		sTonal.Coefficients.SampleRate = C.SampleRate;
 		auto flag = TonalSeparator.Initialize(sTonal);
