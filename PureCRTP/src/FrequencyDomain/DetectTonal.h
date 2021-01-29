@@ -1,6 +1,7 @@
 #pragma once
 #include "../BaseClasses/PureCRTP.h"
 #include "../FilterMinMax.h"
+#include "../FFT.h"
 #include "../Utilities/ApproximationMath.h"
 
 class DetectTonal : public Base<DetectTonal, I::Complex2D, O::Bool2D>
@@ -9,11 +10,12 @@ class DetectTonal : public Base<DetectTonal, I::Complex2D, O::Bool2D>
 
 public:
 	FilterMin FindMin;
+	FFTReal FFT;
 
 private:
 	struct Coefficients
 	{
-		int NBands = 1023;
+		int NBands = 1025;
 		int NChannels = 2;
 		float SampleRate = 44100.f;
 		float FilterbankRate = 44100.f / 512.f;
@@ -22,44 +24,64 @@ private:
 
 	struct Parameters
 	{
-		float TonalTConstant = 0.15f;
-		float TonalThreshold = 2;
+		float TonalTConstant = 0.1f;
+		float TransientTConstant = 0.005f;
+		float TonalThreshold = 2.f;
+		float TransientThreshold = 1.25f;
 		float PowerCompression = 0.3f;
 	} P;
 
 	struct Data
 	{
-		Eigen::ArrayXXf PowerMinSmooth;
-		float TonalLambda;
+		Eigen::ArrayXXf PowerMinSmooth, PowerFreqSmooth;
+		float TonalLambda, TransientLambda;
+		Eigen::ArrayXcf HFilter;
 		void Reset()
 		{
 			PowerMinSmooth.setZero();
+			PowerFreqSmooth.setZero();
+			HFilter.setZero();
 		}
 		bool InitializeMemory(const Coefficients& c)
 		{
 			PowerMinSmooth.resize(c.NBands, c.NChannels);
+			PowerFreqSmooth.resize(c.NBands, c.NChannels);
+			HFilter.resize(c.NBands);
 			return true;
 		}
 		size_t GetAllocatedMemorySize() const
 		{
-			return PowerMinSmooth.GetAllocatedMemorySize();
+			return PowerMinSmooth.GetAllocatedMemorySize() + PowerFreqSmooth.GetAllocatedMemorySize() + HFilter.GetAllocatedMemorySize();
 		}
 		void OnParameterChange(const Parameters& p, const Coefficients& c)
 		{
 			TonalLambda = 1 - expf(-1.f / (c.FilterbankRate*p.TonalTConstant));
+			TransientLambda = 1 - expf(-1.f / (c.FilterbankRate*p.TransientTConstant));
 		}
 	} D;
 
-	DEFINEMEMBERALGORITHMS(1, FindMin);
+	DEFINEMEMBERALGORITHMS(2, FindMin, FFT);
 
 	auto InitializeMembers()
 	{
-		auto c = FindMin.GetCoefficients();
+		auto cMin = FindMin.GetCoefficients();
 		auto nFFT = (C.NBands - 1) * 2;
 		auto length = C.WindowSizeFreqHz / C.SampleRate * nFFT;
-		c.Length = static_cast<int>(std::round(length / 2.f)) * 2 + 1; // make odd
-		c.NChannels = C.NChannels;
-		return FindMin.Initialize(c);
+		cMin.Length = static_cast<int>(std::round(length / 2.f)) * 2 + 1; // make odd
+		cMin.NChannels = C.NChannels;
+		bool flag = FindMin.Initialize(cMin);
+
+		auto cFFT = FFT.GetCoefficients();
+		cFFT.FFTSize = nFFT;
+		flag &= FFT.Initialize(cFFT);
+		
+		// initialize D.HFilter using FFT
+		Eigen::ArrayXf h = Eigen::ArrayXf::Zero(nFFT);
+		h.head(length / 2) = 2.f / length; // averaging filter
+		FFT.Process(h, D.HFilter);
+		D.HFilter = D.HFilter.abs2(); // square averaging filter in freq domain
+
+		return flag;
 	}
 
 	void ProcessOn(Input xFreq, Output tonalDetection) 
@@ -71,12 +93,23 @@ private:
 			{
 				xPower(i, channel) = fasterpow(xPower(i, channel), P.PowerCompression);
 			}
+			// convolve with square averaging filter in freq domain
+			Eigen::ArrayXf xPowerMirror(2 * (C.NBands - 1));
+			xPowerMirror.head(C.NBands) = xPower.col(channel);
+			xPowerMirror.tail(C.NBands - 2) = xPower.block(1, channel, C.NBands - 2, 1).colwise().reverse();
+			Eigen::ArrayXcf convFilter(C.NBands);
+			FFT.Process(xPowerMirror, convFilter);
+			convFilter *= D.HFilter;
+			FFT.Inverse(convFilter, xPowerMirror);
+			Eigen::ArrayXf PowerFreqSmoothOld = D.PowerFreqSmooth.col(channel);
+			D.PowerFreqSmooth.col(channel)  += D.TransientLambda * (xPowerMirror.head(C.NBands) - D.PowerFreqSmooth.col(channel));
+			tonalDetection.col(channel) = D.PowerFreqSmooth.col(channel) < PowerFreqSmoothOld * P.TransientThreshold;
 		}
 		Eigen::ArrayXXf xMin(C.NBands, C.NChannels);
 		FindMin.Process(xPower, xMin);
 		xPower -= xMin + D.PowerMinSmooth;
 		D.PowerMinSmooth += D.TonalLambda * xPower;
-		tonalDetection = D.PowerMinSmooth > xMin * P.TonalThreshold;
+		tonalDetection = (tonalDetection && D.PowerMinSmooth > xMin * P.TonalThreshold);
 	}
 
 	void ProcessOff(Input xFreq, Output tonalDetection) { tonalDetection.setConstant(false); }
