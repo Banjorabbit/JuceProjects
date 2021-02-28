@@ -186,7 +186,9 @@
     <ClInclude Include="..\..\src\FIRMinPhase.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\BeamformerAdaptive.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\CriticalBands.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\DetectTonalPowerMin.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\DetectTransient.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\DetectTransientSmooth.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerMomentum.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerNLMS.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerToeplitz.h" />

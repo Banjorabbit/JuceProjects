@@ -186,6 +186,12 @@
     <ClInclude Include="..\..\src\AsynchronousBase\SeparateTonalTextureTransient.h">
       <Filter>Header Files\AsynchronousBase</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\DetectTonalPowerMin.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\DetectTransientSmooth.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\FrequencyDomain\CriticalBands.cpp">

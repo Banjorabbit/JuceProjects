@@ -2,7 +2,9 @@
 #include "../src/FrequencyDomain/BeamformerAdaptive.h"
 #include "../src/FrequencyDomain/CriticalBands.h"
 #include "../src/FrequencyDomain/DetectTonal.h"
+#include "../src/FrequencyDomain/DetectTonalPowerMin.h"
 #include "../src/FrequencyDomain/DetectTransient.h"
+#include "../src/FrequencyDomain/DetectTransientSmooth.h"
 #include "../src/FrequencyDomain/DetectVoiceActivation.h"
 #include "../src/FrequencyDomain/EchoCancellerMomentum.h"
 #include "../src/FrequencyDomain/EchoCancellerNLMS.h"
@@ -659,6 +661,20 @@ namespace FrequencyDomainTests
 		//}
 	};
 
+	TEST_CLASS(DetectTonalPowerMinTest)
+	{
+		TEST_METHOD(Interface)
+		{
+			DetectTonalPowerMin tonalDetector;
+			auto c = tonalDetector.GetCoefficients();
+			ArrayXXcf input(c.NBands, c.NChannels);
+			input.setRandom();
+			Array<bool, Dynamic, Dynamic> output(c.NBands, c.NChannels);
+			auto flag = AlgorithmInterfaceTest<DetectTonalPowerMin>(input, output);
+			Assert::IsTrue(flag);
+		}
+	};
+
 	TEST_CLASS(DetectTransientTest)
 	{
 		TEST_METHOD(Interface)
@@ -671,6 +687,21 @@ namespace FrequencyDomainTests
 			int nBandsCritical = TransientDetection.ConvertBands.GetNBandsCritical();
 			Array<bool, Dynamic, Dynamic> output(nBandsCritical, c.NChannels);
 			auto flag = AlgorithmInterfaceTest<DetectTransient>(input, output);
+			Assert::IsTrue(flag);
+		}
+	};
+
+	TEST_CLASS(DetectTransientSmoothTest)
+	{
+		TEST_METHOD(Interface)
+		{
+			outputLog << "Running DetectTransientSmoothTest->Interface.\n";
+			DetectTransientSmooth TransientDetection;
+			TransientDetection.Initialize();
+			auto c = TransientDetection.GetCoefficients();
+			ArrayXXcf input(c.NBands, c.NChannels);
+			Array<bool, Dynamic, Dynamic> output(c.NBands, c.NChannels);
+			auto flag = AlgorithmInterfaceTest<DetectTransientSmooth>(input, output);
 			Assert::IsTrue(flag);
 		}
 	};

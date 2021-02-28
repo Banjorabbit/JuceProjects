@@ -10,16 +10,18 @@ struct I::EchoCancellerNLMS
 class EchoCancellerNLMS : public BaseFrequencyDomain<EchoCancellerNLMS, I::EchoCancellerNLMS>
 {
 	friend BaseFrequencyDomain<EchoCancellerNLMS, I::EchoCancellerNLMS>;
+public:
+
+	std::vector<Eigen::ArrayXXcf> GetFilters() const { return D.Filters; }
+	void SetFilters(const std::vector<Eigen::ArrayXXcf>& filters) { D.Filters = filters; }
 
 private:
 	struct Coefficients
 	{
 		float FilterbankRate = 125.f;
-		float FilterLengthMilliseconds = 250.f;
+		int FilterLength = 1;
 		int NBands = 257;
 		int NChannels = 2;
-		int nBuffersInAnalysisFrame = 4;
-		int nBuffersInSynthesisFrame = 4;
 	} C;
 
 	struct Parameters
@@ -30,7 +32,6 @@ private:
 	struct Data
 	{
 		std::vector<Eigen::ArrayXXcf> Filters;
-		int BufferLength;
 		float Lambda, NearendLimit;
 		std::vector<Eigen::ArrayXf> CoefficientVariance, Momentums;
 		Eigen::ArrayXXcf BuffersLoopback;
@@ -50,11 +51,10 @@ private:
 		}
 		bool InitializeMemory(const Coefficients& c)
 		{
-			BufferLength = std::max(static_cast<int>(c.FilterLengthMilliseconds * c.FilterbankRate * 1e-3f) - (c.nBuffersInAnalysisFrame + c.nBuffersInSynthesisFrame - 1), 0) + 1;
-			Lambda = 1.f - expf(-1.f / (c.nBuffersInAnalysisFrame + BufferLength - 1));
-			BuffersLoopback.resize(BufferLength, c.NBands);
+			Lambda = 1.f - expf(-1.f / (c.FilterbankRate*0.1f + c.FilterLength - 1));
+			BuffersLoopback.resize(c.FilterLength, c.NBands);
 			Filters.resize(c.NChannels);
-			for (auto &filter : Filters) { filter.resize(BufferLength, c.NBands); }
+			for (auto &filter : Filters) { filter.resize(c.FilterLength, c.NBands); }
 			LoopbackVariance.resize(c.NBands);
 			CoefficientVariance.resize(c.NChannels);
 			for (auto& coefficientVariance : CoefficientVariance) { coefficientVariance.resize(c.NBands); }
@@ -82,7 +82,7 @@ private:
 
 	void ProcessOn(Input xFreq, Output yFreq)
 	{
-		D.CircCounter = D.CircCounter <= 0 ? D.BufferLength - 1 : D.CircCounter - 1;
+		D.CircCounter = D.CircCounter <= 0 ? C.FilterLength - 1 : D.CircCounter - 1;
 		// Put loopback signals into buffer
 		D.BuffersLoopback.row(D.CircCounter) = xFreq.Loopback.transpose();
 		
@@ -90,7 +90,7 @@ private:
 		D.LoopbackVariance += D.Lambda * (xFreq.Loopback.abs2() - D.LoopbackVariance); // variance of loopback signal i
 
 		//  filter and subtract from input
-		const int conv_length1 = D.BufferLength - D.CircCounter;
+		const int conv_length1 = C.FilterLength - D.CircCounter;
 		for (auto channel = 0; channel < C.NChannels; channel++)
 		{
 			// estimated transferfunction x loopback
@@ -111,9 +111,9 @@ private:
 				const float pow_error = (yFreq(ibin, channel).real()*yFreq(ibin, channel).real() + yFreq(ibin, channel).imag()*yFreq(ibin, channel).imag());
 				D.NearendVariance(ibin, channel) += D.Lambda * (std::max(pow_error, newpow) - D.NearendVariance(ibin, channel));
 
-				const float p = D.Momentums[channel](ibin) + D.BufferLength * D.CoefficientVariance[channel](ibin);
-				float q = p / (D.BufferLength * D.NearendVariance(ibin, channel) + (D.BufferLength + 2) * p * D.LoopbackVariance(ibin) + 1e-30f);
-				q = std::min(q, 1.f / (D.LoopbackVariance(ibin) * D.BufferLength + 1e-30f));
+				const float p = D.Momentums[channel](ibin) + C.FilterLength * D.CoefficientVariance[channel](ibin);
+				float q = p / (C.FilterLength * D.NearendVariance(ibin, channel) + (C.FilterLength + 2) * p * D.LoopbackVariance(ibin) + 1e-30f);
+				q = std::min(q, 1.f / (D.LoopbackVariance(ibin) * C.FilterLength + 1e-30f));
 				D.Momentums[channel](ibin) = std::max((1.f - q * D.LoopbackVariance(ibin)) * p, 0.01f);
 				const std::complex<float> W = q * yFreq(ibin, channel);
 

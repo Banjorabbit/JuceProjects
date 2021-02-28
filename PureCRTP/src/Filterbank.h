@@ -8,6 +8,14 @@ class FilterbankAnalysis : public Base<FilterbankAnalysis, I::Real2D, O::Complex
 
 public:
 	FFTReal FFT;
+	void SetWindow(const Eigen::Ref<const Eigen::ArrayXf>& window) 
+	{
+		if ((window.size() == C.FrameSize) & (P.WindowType == P.UserDefined)) { D.Window = window; }
+	}
+
+	Eigen::ArrayXf GetWindow() const { return D.Window; }
+
+	static Eigen::ArrayXf GetHannWindow(const int size) { return .5f * (1.f - Eigen::ArrayXf::LinSpaced(size, 0, 2.f * static_cast<float>(PI) * (size - 1) / size).cos()); };
 
 private:
 	struct Coefficients
@@ -20,7 +28,7 @@ private:
 
 	struct Parameters
 	{
-		enum WindowTypes { HannWindow , Rectangular};
+		enum WindowTypes { HannWindow , Rectangular, UserDefined};
 		WindowTypes WindowType = HannWindow;
 		float Gain = 1;
 	} P;
@@ -57,10 +65,12 @@ private:
 			switch (p.WindowType)
 			{
 			case Parameters::HannWindow:
-				Window = .5f * (1.f - Eigen::ArrayXf::LinSpaced(c.FrameSize, 0, 2.f * static_cast<float>(PI) * (c.FrameSize - 1) / c.FrameSize).cos());
+				Window = GetHannWindow(c.FrameSize);
 				break;
 			case Parameters::Rectangular:
 				Window.setOnes();
+				break;
+			case Parameters::UserDefined:
 				break;
 			default:
 				Window.setZero();
@@ -102,6 +112,8 @@ class FilterbankSynthesis : public Base<FilterbankSynthesis, I::Complex2D, O::Re
 
 public:
 	FFTRealInverse FFTInv;
+	Eigen::ArrayXf GetWindow() const { return D.Window; }
+
 private:
 	struct Coefficients
 	{
