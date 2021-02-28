@@ -89,7 +89,7 @@ private:
 		DelayLine.Process(xTime, xTexture);
 		xTexture -= xTonal;
 		TransientSeparator.Process(xTexture, xTransient);
-		xTexture -= xTransient;		
+		//xTexture -= xTransient;		
 		switch (P.OutputSelector)
 		{
 		case Parameters::TONAL: yTime = xTonal; break;

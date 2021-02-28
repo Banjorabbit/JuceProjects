@@ -89,6 +89,8 @@ private:
 		// update loopback variance
 		D.LoopbackVariance += D.Lambda * (xFreq.Loopback.abs2() - D.LoopbackVariance); // variance of loopback signal i
 
+		yFreq = xFreq.Input;
+		Eigen::ArrayXXf pMin = yFreq.abs2();
 		//  filter and subtract from input
 		const int conv_length1 = C.FilterLength - D.CircCounter;
 		for (auto channel = 0; channel < C.NChannels; channel++)
@@ -105,7 +107,11 @@ private:
 				{
 					micEst += D.BuffersLoopback(i, ibin) * D.Filters[channel](conv_length1 + i, ibin);
 				}
-				yFreq(ibin, channel) = xFreq.Input(ibin, channel) - micEst;
+				std::complex<float> error = xFreq.Input(ibin, channel) - micEst;
+				float pNew = error.real()*error.real() + error.imag()*error.imag();
+				if (pNew < pMin(ibin, channel)) {
+					yFreq(ibin, channel) = error;
+				}
 
 				const float newpow = (micEst.real()*micEst.real() + micEst.imag()*micEst.imag()) * D.NearendLimit;
 				const float pow_error = (yFreq(ibin, channel).real()*yFreq(ibin, channel).real() + yFreq(ibin, channel).imag()*yFreq(ibin, channel).imag());
