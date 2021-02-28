@@ -175,6 +175,12 @@ private:
 			} 
 		}
 		D.PhaseOld = yFreq.col(1).arg() - yFreq.col(0).arg();
+		for (auto i = 0; i < D.NBands; i++)
+		{
+			// wrap to +- PI (0 Hz always has Phase=0.f)
+			if (D.PhaseOld(i) > static_cast<const float>(PI)) { D.PhaseOld(i) -= 2.f*static_cast<const float>(PI); }
+			else if (D.PhaseOld(i) < -static_cast<const float>(PI)) { D.PhaseOld(i) += 2.f*static_cast<const float>(PI); }
+		}
 
 		FilterbankInverse.Process(yFreq.col(1), yTime);
 	}

@@ -40,7 +40,6 @@ private:
 		{
 			PowerMinSmooth.setZero();
 			PowerFreqSmooth.setZero();
-			HFilter.setZero();
 		}
 		bool InitializeMemory(const Coefficients& c)
 		{
