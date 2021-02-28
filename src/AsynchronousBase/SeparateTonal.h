@@ -46,7 +46,7 @@ private:
 		int FrameSize = 4096;
 		int FrameSizeTransient = 1024;
 		int NChannelsIn = 2;
-		int PredictionDelay = 640;
+		int PredictionDelay = 1280;
 		AsynchronousBufferType AsynchronousBuffer = VARIABLE_SIZE;
 	} C;
 
@@ -79,7 +79,7 @@ private:
 		sT.Coefficients.SampleRate = C.SampleRate;
 		sT.Coefficients.WindowSizeFreqHz = 200;
 		sT.Parameters.PowerCompression = 0.3f;
-		sT.Parameters.TonalTConstant = 0.15f;
+		sT.Parameters.TonalTConstant = 0.1f;
 		sT.Parameters.TonalThreshold = 2.f;
 		auto flag = TonalDetector.Initialize(sT);
 
@@ -108,6 +108,7 @@ private:
 		sFT.Coefficients.FFTSize = C.FrameSize;
 		sFT.Coefficients.BufferSize = C.BufferSize;
 		sFT.Parameters.WindowType = sFT.Parameters.UserDefined; 
+		sFT.Parameters.Gain = 4; // window is 4 times short than Filterbank, so gain should be 4 times higher
 		flag &= FilterbankTransient.Initialize(sFT);
 		// set userdefined window
 		Eigen::ArrayXf windowTransient(C.FrameSize);
@@ -179,15 +180,15 @@ private:
 			std::vector<Eigen::ArrayXXcf> filters = Predictor[channel].GetFilters();
 			for (auto iband = 0; iband < D.NBands; iband++)
 			{
-				if (DecisionTransient(iband, channel)) { filters[0](0, iband) = FiltersOptimal(iband, 0) * 1e-6f; }
-				else if (DecisionTonal(iband, channel)) { filters[0](0, iband) = FiltersOptimal(iband, 0); }
+				if (DecisionTransient(iband, channel)) { filters[0](0, iband) = FiltersOptimal(iband, channel) * 1e-6f; }
+				if (DecisionTonal(iband, channel)) { filters[0](0, iband) = FiltersOptimal(iband, channel); }
 			}
 			Predictor[channel].SetFilters(filters);
 
-			Predictor[channel].Process({ xFreq.col(channel), xFreqDelayed.col(channel) }, yFreq.col(channel));
+			Predictor[channel].Process({ xFreq.col(channel), xFreqDelayed.col(channel) }, yFreq.col(channel)); // predictor actually outputs the non-periodic part!
 		}
 
-		FilterbankInverse.Process(yFreq, yTime);
+		FilterbankInverse.Process(xFreq - yFreq, yTime);
 	}
 
 	void ProcessOff(Input xTime, Output yTime) { yTime = xTime; }
