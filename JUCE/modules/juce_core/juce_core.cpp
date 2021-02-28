@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
@@ -36,9 +36,10 @@
 
 #include "juce_core.h"
 
-#include <locale>
 #include <cctype>
 #include <cstdarg>
+#include <locale>
+#include <thread>
 
 #if ! JUCE_ANDROID
  #include <sys/timeb.h>
@@ -53,10 +54,9 @@
   #include <cstdio>
   #include <locale.h>
  #else
-  #pragma warning (push)
-  #pragma warning (disable: 4091)
+  JUCE_BEGIN_IGNORE_WARNINGS_MSVC (4091)
   #include <Dbghelp.h>
-  #pragma warning (pop)
+  JUCE_END_IGNORE_WARNINGS_MSVC
 
   #if ! JUCE_DONT_AUTOLINK_TO_WIN32_LIBRARIES
    #pragma comment (lib, "DbgHelp.lib")
@@ -125,6 +125,7 @@
 #include "containers/juce_ReferenceCountedArray.cpp"
 #include "containers/juce_SparseSet.cpp"
 #include "files/juce_DirectoryIterator.cpp"
+#include "files/juce_RangedDirectoryIterator.cpp"
 #include "files/juce_File.cpp"
 #include "files/juce_FileInputStream.cpp"
 #include "files/juce_FileOutputStream.cpp"
@@ -136,6 +137,7 @@
 #include "maths/juce_Expression.cpp"
 #include "maths/juce_Random.cpp"
 #include "memory/juce_MemoryBlock.cpp"
+#include "memory/juce_AllocationHooks.cpp"
 #include "misc/juce_RuntimePermissions.cpp"
 #include "misc/juce_Result.cpp"
 #include "misc/juce_Uuid.cpp"
