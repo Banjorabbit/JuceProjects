@@ -54,9 +54,9 @@ private:
 		}
 		void OnParameterChange(const Parameters& p, const Coefficients& c) 
 		{
-			AttackShortLambda = 1.f - expf(-1.f / (c.FilterbankRate * p.AttackShortTConstant));
-			ReleaseShortLambda = 1.f - expf(-1.f / (c.FilterbankRate * p.ReleaseShortTConstant));
-			LongLambda = 1.f - expf(-1.f / (c.FilterbankRate * p.LongTConstant));
+			AttackShortLambda = 1.f - expf(-1.f / std::max(1e-10f, c.FilterbankRate * p.AttackShortTConstant));
+			ReleaseShortLambda = 1.f - expf(-1.f / std::max(1e-10f, c.FilterbankRate * p.ReleaseShortTConstant));
+			LongLambda = 1.f - expf(-1.f / std::max(1e-10f, c.FilterbankRate * p.LongTConstant));
 		}
 	} D;
 
