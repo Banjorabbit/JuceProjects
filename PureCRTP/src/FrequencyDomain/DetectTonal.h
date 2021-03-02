@@ -54,8 +54,8 @@ private:
 		}
 		void OnParameterChange(const Parameters& p, const Coefficients& c)
 		{
-			TonalLambda = 1 - expf(-1.f / (c.FilterbankRate*p.TonalTConstant));
-			TransientLambda = 1 - expf(-1.f / (c.FilterbankRate*p.TransientTConstant));
+			TonalLambda = 1 - expf(-1.f / std::max(1e-10f, c.FilterbankRate*p.TonalTConstant));
+			TransientLambda = 1 - expf(-1.f / std::max(1e-10f, c.FilterbankRate*p.TransientTConstant));
 		}
 	} D;
 

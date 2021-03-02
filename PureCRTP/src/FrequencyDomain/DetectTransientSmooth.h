@@ -53,7 +53,7 @@ private:
 		}
 		void OnParameterChange(const Parameters& p, const Coefficients& c)
 		{
-			Lambda = 1.f - expf(-1.f / (c.FilterbankRate * p.TConstant));
+			Lambda = 1.f - expf(-1.f / std::max(1e-10f, c.FilterbankRate * p.TConstant));
 		}
 	} D;
 
