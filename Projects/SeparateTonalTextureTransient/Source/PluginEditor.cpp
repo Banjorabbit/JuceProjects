@@ -33,6 +33,30 @@ SeparateTonalTextureTransientAudioProcessorEditor::SeparateTonalTextureTransient
 	//selectOutput.setValue(processor.Pitch);
 	addAndMakeVisible(&tonalThreshold);
 	tonalThreshold.addListener(this);
+
+	timeConstantTransient.setSliderStyle(Slider::LinearBarVertical);
+	timeConstantTransient.setRange(0.f, 1.f, .001f);
+	timeConstantTransient.setTextValueSuffix("Transient Timeconstant");
+	timeConstantTransient.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
+	//selectOutput.setValue(processor.Pitch);
+	addAndMakeVisible(&timeConstantTransient);
+	timeConstantTransient.addListener(this);
+
+	timeConstantTonal.setSliderStyle(Slider::LinearBarVertical);
+	timeConstantTonal.setRange(0.f, 1.f, .001f);
+	timeConstantTonal.setTextValueSuffix("Transient Timeconstant");
+	timeConstantTonal.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
+	//selectOutput.setValue(processor.Pitch);
+	addAndMakeVisible(&timeConstantTonal);
+	timeConstantTonal.addListener(this);
+
+	predictionDelay.setSliderStyle(Slider::LinearBarVertical);
+	predictionDelay.setRange(0.f, 1.f, .001f);
+	predictionDelay.setTextValueSuffix("Transient Timeconstant");
+	predictionDelay.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
+	//selectOutput.setValue(processor.Pitch);
+	addAndMakeVisible(&predictionDelay);
+	predictionDelay.addListener(this);
 }
 
 SeparateTonalTextureTransientAudioProcessorEditor::~SeparateTonalTextureTransientAudioProcessorEditor()
@@ -56,10 +80,16 @@ void SeparateTonalTextureTransientAudioProcessorEditor::resized()
     // subcomponents in your editor..
 	selectOutput.setBounds(40, 30, 20, getHeight() - 60);
 	tonalThreshold.setBounds(60, 30, 20, getHeight() - 60);
+	timeConstantTransient.setBounds(80, 30, 20, getHeight() - 60);
+	timeConstantTonal.setBounds(100, 30, 20, getHeight() - 60);
+	predictionDelay.setBounds(120, 30, 20, getHeight() - 60);
 }
 void SeparateTonalTextureTransientAudioProcessorEditor::sliderValueChanged(Slider * slider)
 {
 	processor.tonalThreshold = tonalThreshold.getValue();
+	processor.timeConstantTransient = timeConstantTransient.getValue();
+	processor.timeConstantTonal = timeConstantTonal.getValue();
+	processor.predictionDelay = predictionDelay.getValue();
 	SeparateTonalTextureTransientAudioProcessor::SelectOutput select = SeparateTonalTextureTransientAudioProcessor::TRANSIENT;
 	if (selectOutput.getValue() < 1.f) { select = SeparateTonalTextureTransientAudioProcessor::TONAL; }
 	else if (selectOutput.getValue() < 2.f) { select = SeparateTonalTextureTransientAudioProcessor::TEXTURE; }

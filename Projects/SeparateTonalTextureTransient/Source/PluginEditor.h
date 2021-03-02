@@ -34,5 +34,8 @@ private:
 	void sliderValueChanged(Slider *slider) override;
 	Slider selectOutput;
 	Slider tonalThreshold;
+	Slider timeConstantTransient;
+	Slider timeConstantTonal;
+	Slider predictionDelay;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SeparateTonalTextureTransientAudioProcessorEditor)
 };

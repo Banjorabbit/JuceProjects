@@ -58,6 +58,9 @@ public:
 
 	enum SelectOutput { TONAL, TEXTURE, TRANSIENT, SUM};
 	float tonalThreshold;
+	float timeConstantTransient;
+	float timeConstantTonal;
+	float predictionDelay;
 	void UpdateParameters(const SelectOutput& outputSelector)
 	{
 		auto p = Separator.GetParameters();
@@ -68,10 +71,23 @@ public:
 		case TRANSIENT: p.OutputSelector = p.TRANSIENT;break;
 		case SUM: p.OutputSelector = p.SUM;break;
 		}
+		
 		Separator.SetParameters(p);
 		auto pTonal = Separator.TonalSeparator.TonalDetector.GetParameters();
 		pTonal.TonalThreshold = tonalThreshold;
-		Separator.TonalSeparator.TonalDetector.SetParameters(pTonal);		
+		pTonal.TonalTConstant = timeConstantTonal;
+		Separator.TonalSeparator.TonalDetector.SetParameters(pTonal);	
+
+		auto pTransient = Separator.TransientSeparator.GetParameters();
+		pTransient.AbsTConstant = timeConstantTransient;
+		Separator.TransientSeparator.SetParameters(pTransient);
+
+		auto cTonal = Separator.TonalSeparator.GetCoefficients();
+		if (cTonal.PredictionDelay != predictionDelay)
+		{
+			cTonal.PredictionDelay = predictionDelay;
+			Separator.TonalSeparator.Initialize(cTonal);
+		}
 	}
 private:
 	SeparateTonalTextureTransient Separator;
