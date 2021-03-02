@@ -57,10 +57,10 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 	enum SelectOutput { TONAL, TEXTURE, TRANSIENT, SUM};
-	float tonalThreshold;
-	float timeConstantTransient;
-	float timeConstantTonal;
-	float predictionDelay;
+	float tonalThreshold = 2.f;
+	float timeConstantTransient = 0.1f;
+	float timeConstantTonal = 0.1f;
+	int predictionDelay = 1280;
 	void UpdateParameters(const SelectOutput& outputSelector)
 	{
 		auto p = Separator.GetParameters();

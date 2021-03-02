@@ -22,7 +22,7 @@ SeparateTonalTextureTransientAudioProcessorEditor::SeparateTonalTextureTransient
 	selectOutput.setRange(.0f, 3.f, 1.f);
 	selectOutput.setTextValueSuffix("Output Selector");
 	selectOutput.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
-	//selectOutput.setValue(processor.Pitch);
+	selectOutput.setValue(0);
 	addAndMakeVisible(&selectOutput);
 	selectOutput.addListener(this);
 
@@ -30,7 +30,7 @@ SeparateTonalTextureTransientAudioProcessorEditor::SeparateTonalTextureTransient
 	tonalThreshold.setRange(0.f, 5.f, .1f);
 	tonalThreshold.setTextValueSuffix("Tonal Threshold");
 	tonalThreshold.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
-	//selectOutput.setValue(processor.Pitch);
+	tonalThreshold.setValue(processor.tonalThreshold);
 	addAndMakeVisible(&tonalThreshold);
 	tonalThreshold.addListener(this);
 
@@ -38,23 +38,23 @@ SeparateTonalTextureTransientAudioProcessorEditor::SeparateTonalTextureTransient
 	timeConstantTransient.setRange(0.f, 1.f, .001f);
 	timeConstantTransient.setTextValueSuffix("Transient Timeconstant");
 	timeConstantTransient.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
-	//selectOutput.setValue(processor.Pitch);
+	timeConstantTransient.setValue(processor.timeConstantTransient);
 	addAndMakeVisible(&timeConstantTransient);
 	timeConstantTransient.addListener(this);
 
 	timeConstantTonal.setSliderStyle(Slider::LinearBarVertical);
 	timeConstantTonal.setRange(0.f, 1.f, .001f);
-	timeConstantTonal.setTextValueSuffix("Transient Timeconstant");
+	timeConstantTonal.setTextValueSuffix("Tonal Timeconstant");
 	timeConstantTonal.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
-	//selectOutput.setValue(processor.Pitch);
+	timeConstantTonal.setValue(processor.timeConstantTonal);
 	addAndMakeVisible(&timeConstantTonal);
 	timeConstantTonal.addListener(this);
 
 	predictionDelay.setSliderStyle(Slider::LinearBarVertical);
-	predictionDelay.setRange(0.f, 1.f, .001f);
-	predictionDelay.setTextValueSuffix("Transient Timeconstant");
+	predictionDelay.setRange(1.f, 48000.f, 1);
+	predictionDelay.setTextValueSuffix("Prediction Delay");
 	predictionDelay.setTextBoxStyle(Slider::TextBoxBelow, true, 20, getHeight() - 60);
-	//selectOutput.setValue(processor.Pitch);
+	predictionDelay.setValue(processor.predictionDelay);
 	addAndMakeVisible(&predictionDelay);
 	predictionDelay.addListener(this);
 }
