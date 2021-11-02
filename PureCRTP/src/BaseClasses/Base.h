@@ -76,11 +76,21 @@ public:
 		auto& algo = static_cast<Talgo&>(*this);
 		algo.C = c;
 		auto flag = algo.D.InitializeMemory(algo.C);
-		algo.D.Reset();
-		algo.D.OnParameterChange(algo.P, algo.C);
-		flag &= algo.InitializeMembers();
-		if (flag == true) { Initialized = true; return true; }
-		else { Initialized = false; return false; }
+		if (flag == true)
+		{
+			algo.D.Reset();
+			algo.D.OnParameterChange(algo.P, algo.C);
+			flag = algo.InitializeMembers();
+			if (flag == true)
+			{
+				Initialized = true;
+				return true;
+			}
+			Initialized = false;
+			return false;
+		}
+		Initialized = false;
+		return false;
 	}
 
 	bool Initialize() { return Initialize(static_cast<Talgo&>(*this).C); }

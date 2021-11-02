@@ -11,8 +11,10 @@
 #include "../src/AsynchronousBase/PitchShiftAdaptiveResolution.h"
 #include "../src/AsynchronousBase/PitchShiftPhaseLocking.h"
 #include "../src/AsynchronousBase/SeparateTonal.h"
+#include "../src/AsynchronousBase/SeparateTonalPrediction.h"
 #include "../src/AsynchronousBase/SeparateTonalTextureTransient.h"
 #include "../src/AsynchronousBase/SeparateTransient.h"
+#include "../src/AsynchronousBase/SpatialNoiseReduction.h"
 #include "../src/AsynchronousBase/VirtualizationHeadphones.h"
 #include "../Utilities/AudioFile.h"
 #include "../Utilities/FormatHandling.h"
@@ -90,6 +92,15 @@ namespace AsynchronousBaseTests
 
 	};
 
+	TEST_CLASS(SeparateTonalPredictionTest)
+	{
+		TEST_METHOD(InterfaceAsynchronous)
+		{
+			auto flag = AlgorithmInterfaceAsynchronousTest<SeparateTonalPrediction>();
+			Assert::IsTrue(flag);
+		}
+	};
+
 	TEST_CLASS(SeparateTonalTest)
 	{
 		TEST_METHOD(InterfaceAsynchronous)
@@ -133,6 +144,73 @@ namespace AsynchronousBaseTests
 		{
 			auto flag = AlgorithmInterfaceAsynchronousTest<SeparateTransient>();
 			Assert::IsTrue(flag);
+		}
+	};
+
+	TEST_CLASS(SpatialNoiseReductionTest)
+	{
+		TEST_METHOD(InterfaceAsynchronous)
+		{
+			auto flag = AlgorithmInterfaceAsynchronousTest<SpatialNoiseReduction>();
+			Assert::IsTrue(flag);
+		}
+
+		TEST_METHOD(ProcessAudioTest)
+		{
+			int nChannels = 3;
+			int sampleRate = 16000;
+			int blockSize = 128;
+
+			AudioFile<float> audioFileIn, audioFileOut;
+
+			audioFileIn.setNumChannels(nChannels);
+			audioFileIn.setBitDepth(16);
+			audioFileIn.setSampleRate(sampleRate);
+			Assert::IsTrue(audioFileIn.load("../../../../Datasets/wav//input30degL16.wav")); 
+
+			audioFileOut.setNumChannels(1);
+			audioFileOut.setBitDepth(16);
+			audioFileOut.setSampleRate(sampleRate);
+
+			SpatialNoiseReduction spatialNR;
+			
+			auto c = spatialNR.GetCoefficients();
+			c.BufferSize = blockSize;
+			c.NChannelsIn = nChannels;
+			c.SampleRate = (float)sampleRate;
+			auto flag = spatialNR.Initialize(c);
+		
+			int numFrames = audioFileIn.getNumSamplesPerChannel() / blockSize;
+			double duration1 = 0;
+			for (auto i = 0; i < numFrames - 2; i++)
+			{
+				ArrayXXf frame(blockSize, nChannels);
+				ArrayXf frameOut(blockSize);
+				
+				for (auto ichan = 0; ichan < nChannels; ichan++)
+				{
+					frame.col(ichan) = Map<ArrayXf>(&audioFileIn.samples[ichan][i*blockSize], blockSize);
+				}
+
+				auto start = std::chrono::steady_clock::now();
+				spatialNR.Process(frame, frameOut);
+				auto end = std::chrono::steady_clock::now();
+				auto time = std::chrono::duration<double, std::micro>(end - start).count();
+				duration1 += time;
+
+				for (auto j = 0; j < blockSize; j++)
+				{
+					audioFileOut.samples[0].push_back(frameOut(j));
+				}
+			}
+
+			duration1 /= numFrames;
+			outputLog << "Execution time: " << duration1 << " us.\n";
+
+			outputLog << "Saving file.\n";
+			audioFileOut.save("../../../../Temp/SpatialNR.wav", AudioFileFormat::Wave); // truncate to 24bits 
+
+			outputLog << "Test successful." << std::endl;
 		}
 	};
 

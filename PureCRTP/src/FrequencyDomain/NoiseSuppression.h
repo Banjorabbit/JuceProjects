@@ -8,8 +8,8 @@ class NoiseSuppression : public BaseFrequencyDomain<NoiseSuppression>
 	friend BaseFrequencyDomain<NoiseSuppression>;
 
 public:
-	VectorAlgo<NoiseEstimationSPP> noiseEstimation;
-	VectorAlgo<GainCalculationSimple> gainCalculation;
+	NoiseEstimationSPP noiseEstimation;
+	GainCalculationSimple gainCalculation;
 
 private:
 	struct Coefficients	
@@ -23,16 +23,9 @@ private:
 
 	struct Data
 	{
-		Eigen::ArrayXXf PowerNoise;
-		Eigen::ArrayXXf Gain;
-		void Reset() { Gain.setZero(); PowerNoise.setZero(); }
-		bool InitializeMemory(const Coefficients& c) 
-		{
-			Gain.resize(c.NBands, c.NChannels);
-			PowerNoise.resize(c.NBands, c.NChannels);
-			return true;
-		}
-		size_t GetAllocatedMemorySize() const { return PowerNoise.GetAllocatedMemorySize() + Gain.GetAllocatedMemorySize(); }
+		void Reset() { }
+		bool InitializeMemory(const Coefficients& c) { return true; }
+		size_t GetAllocatedMemorySize() const { return 0; }
 		void OnParameterChange(const Parameters& p, const Coefficients& c) {}
 	} D;
 
@@ -40,30 +33,29 @@ private:
 
 	auto InitializeMembers() 
 	{
-		noiseEstimation.resize(C.NChannels);
-		gainCalculation.resize(C.NChannels);
-		auto cNE = noiseEstimation[0].GetCoefficients();
-		auto cGC = gainCalculation[0].GetCoefficients();
+		auto cNE = noiseEstimation.GetCoefficients();
 		cNE.FilterbankRate = C.FilterbankRate;
 		cNE.NBands = C.NBands;
-		cNE.NChannels = 1;
-		cGC.FilterbankRate = C.FilterbankRate;
+		cNE.NChannels = C.NChannels;
 		auto flag = noiseEstimation.Initialize(cNE);
+
+		auto cGC = gainCalculation.GetCoefficients();
+		cGC.FilterbankRate = C.FilterbankRate;
+		cGC.NBands = C.NBands;
+		cGC.NChannels = C.NChannels;
 		flag &= gainCalculation.Initialize(cGC);
 		return flag;
 	}
 
 	void ProcessOn(Input xFreq, Output yFreq)
 	{
-		for (auto channel = 0; channel < xFreq.cols(); channel++)
-		{
-			Eigen::ArrayXf power = xFreq.col(channel).abs2();
-			Eigen::ArrayXf activity(C.NBands);
-			noiseEstimation[channel].Process(power, { D.PowerNoise.col(channel), activity });
-			power /= D.PowerNoise.col(channel);
-			gainCalculation[channel].Process(power, D.Gain.col(channel));
-		}
-		yFreq = xFreq * D.Gain;
+		Eigen::ArrayXXf power = xFreq.abs2();
+		Eigen::ArrayXXf powerNoise(C.NBands, C.NChannels);
+		Eigen::ArrayXXf gain(C.NBands, C.NChannels);
+		noiseEstimation.Process(power, { powerNoise, gain }); // second output is not used, so write to gain that will be overwritten later
+		power /= (powerNoise + 1e-20f);
+		gainCalculation.Process(power, gain);
+		yFreq = xFreq * gain;
 	}
 
 	void ProcessOff(Input xFreq, Output yFreq)

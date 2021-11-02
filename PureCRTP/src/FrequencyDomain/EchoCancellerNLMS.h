@@ -10,6 +10,7 @@ struct I::EchoCancellerNLMS
 class EchoCancellerNLMS : public BaseFrequencyDomain<EchoCancellerNLMS, I::EchoCancellerNLMS>
 {
 	friend BaseFrequencyDomain<EchoCancellerNLMS, I::EchoCancellerNLMS>;
+
 public:
 
 	std::vector<Eigen::ArrayXXcf> GetFilters() const { return D.Filters; }
@@ -19,9 +20,9 @@ private:
 	struct Coefficients
 	{
 		float FilterbankRate = 125.f;
-		int FilterLength = 1;
+		int FilterLength = 100;
 		int NBands = 257;
-		int NChannels = 2;
+		int NChannels = 4;
 	} C;
 
 	struct Parameters
@@ -33,10 +34,9 @@ private:
 	{
 		std::vector<Eigen::ArrayXXcf> Filters;
 		float Lambda, NearendLimit;
-		std::vector<Eigen::ArrayXf> CoefficientVariance, Momentums;
 		Eigen::ArrayXXcf BuffersLoopback;
 		Eigen::ArrayXf LoopbackVariance;
-		Eigen::ArrayXXf NearendVariance;
+		Eigen::ArrayXXf NearendVariance, Momentums, CoefficientVariance;
 		int CircCounter;
 
 		void Reset()
@@ -44,8 +44,8 @@ private:
 			BuffersLoopback.setZero();
 			for (auto &filter : Filters) { filter.setZero(); }
 			LoopbackVariance.setConstant(100.f);
-			for (auto &coefficientVariance : CoefficientVariance) { coefficientVariance.setZero(); }
-			for (auto &momentum : Momentums) { momentum.setOnes(); }
+			CoefficientVariance.setZero();
+			Momentums.setOnes();
 			NearendVariance.setConstant(10.f);
 			CircCounter = 0;
 		}
@@ -56,10 +56,8 @@ private:
 			Filters.resize(c.NChannels);
 			for (auto &filter : Filters) { filter.resize(c.FilterLength, c.NBands); }
 			LoopbackVariance.resize(c.NBands);
-			CoefficientVariance.resize(c.NChannels);
-			for (auto& coefficientVariance : CoefficientVariance) { coefficientVariance.resize(c.NBands); }
-			Momentums.resize(c.NChannels);
-			for (auto& momentum : Momentums) { momentum.resize(c.NBands); }
+			CoefficientVariance.resize(c.NBands, c.NChannels);
+			Momentums.resize(c.NBands, c.NChannels);
 			NearendVariance.resize(c.NBands, c.NChannels);
 			return true;
 		}
@@ -69,8 +67,8 @@ private:
 			for (auto& filter : Filters) { size += filter.GetAllocatedMemorySize(); }
 			size += BuffersLoopback.GetAllocatedMemorySize();
 			size += LoopbackVariance.GetAllocatedMemorySize();
-			for (auto& coef : CoefficientVariance) { size += coef.GetAllocatedMemorySize(); }
-			for (auto& momentum : Momentums) { size += momentum.GetAllocatedMemorySize(); }
+			size += CoefficientVariance.GetAllocatedMemorySize();
+			size += Momentums.GetAllocatedMemorySize(); 
 			size += NearendVariance.GetAllocatedMemorySize();
 			return size;
 		}
@@ -80,64 +78,6 @@ private:
 		}
 	} D;
 
-	void ProcessOn(Input xFreq, Output yFreq)
-	{
-		D.CircCounter = D.CircCounter <= 0 ? C.FilterLength - 1 : D.CircCounter - 1;
-		// Put loopback signals into buffer
-		D.BuffersLoopback.row(D.CircCounter) = xFreq.Loopback.transpose();
-		
-		// update loopback variance
-		D.LoopbackVariance += D.Lambda * (xFreq.Loopback.abs2() - D.LoopbackVariance); // variance of loopback signal i
-
-		yFreq = xFreq.Input;
-		Eigen::ArrayXXf pMin = yFreq.abs2();
-		//  filter and subtract from input
-		const int conv_length1 = C.FilterLength - D.CircCounter;
-		for (auto channel = 0; channel < C.NChannels; channel++)
-		{
-			// estimated transferfunction x loopback
-			for (auto ibin = 0; ibin < C.NBands; ibin++)
-			{
-				std::complex<float> micEst = 0.f;
-				for (auto i = 0; i < conv_length1; i++)
-				{
-					micEst += D.BuffersLoopback(D.CircCounter + i, ibin) * D.Filters[channel](i, ibin);
-				}
-				for (auto i = 0; i < D.CircCounter; i++)
-				{
-					micEst += D.BuffersLoopback(i, ibin) * D.Filters[channel](conv_length1 + i, ibin);
-				}
-				std::complex<float> error = xFreq.Input(ibin, channel) - micEst;
-				float pNew = error.real()*error.real() + error.imag()*error.imag();
-				if (pNew < pMin(ibin, channel)) {
-					yFreq(ibin, channel) = error;
-				}
-
-				const float newpow = (micEst.real()*micEst.real() + micEst.imag()*micEst.imag()) * D.NearendLimit;
-				const float pow_error = (yFreq(ibin, channel).real()*yFreq(ibin, channel).real() + yFreq(ibin, channel).imag()*yFreq(ibin, channel).imag());
-				D.NearendVariance(ibin, channel) += D.Lambda * (std::max(pow_error, newpow) - D.NearendVariance(ibin, channel));
-
-				const float p = D.Momentums[channel](ibin) + C.FilterLength * D.CoefficientVariance[channel](ibin);
-				float q = p / (C.FilterLength * D.NearendVariance(ibin, channel) + (C.FilterLength + 2) * p * D.LoopbackVariance(ibin) + 1e-30f);
-				q = std::min(q, 1.f / (D.LoopbackVariance(ibin) * C.FilterLength + 1e-30f));
-				D.Momentums[channel](ibin) = std::max((1.f - q * D.LoopbackVariance(ibin)) * p, 0.01f);
-				const std::complex<float> W = q * yFreq(ibin, channel);
-
-				const std::complex<float> temp1 = W * std::conj(D.BuffersLoopback(D.CircCounter, ibin));
-				D.Filters[channel](0, ibin) += temp1;
-				for (auto i = 1; i < conv_length1; i++)
-				{
-					D.Filters[channel](i, ibin) += W * std::conj(D.BuffersLoopback(D.CircCounter + i, ibin));
-				}
-				for (auto i = 0; i < D.CircCounter; i++)
-				{
-					D.Filters[channel](conv_length1 + i, ibin) += W * std::conj(D.BuffersLoopback(i, ibin));
-				}
-				// update coefficient variance
-				D.CoefficientVariance[channel](ibin) += D.Lambda * (temp1.real()*temp1.real() + temp1.imag()*temp1.imag() - D.CoefficientVariance[channel](ibin));
-			}
-		}
-	}
-
-	void ProcessOff(Input xFreq, Output yFreq) { yFreq = xFreq.Input; }
+	void ProcessOn(Input xFreq, Output yFreq);
+	void ProcessOff(Input xFreq, Output yFreq);
 };

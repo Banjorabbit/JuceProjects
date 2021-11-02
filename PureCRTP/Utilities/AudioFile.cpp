@@ -317,12 +317,12 @@ bool AudioFile<T>::decodeWaveFile (std::vector<uint8_t>& fileData)
         return false;
     }
     
-    // check the number of channels is mono or stereo
-    if (numChannels < 1 ||numChannels > 2)
-    {
-        std::cout << "ERROR: this WAV file seems to be neither mono nor stereo (perhaps multi-track, or corrupted?)" << std::endl;
-        return false;
-    }
+    //// check the number of channels is mono or stereo
+    //if (numChannels < 1 ||numChannels > 2)
+    //{
+    //    std::cout << "ERROR: this WAV file seems to be neither mono nor stereo (perhaps multi-track, or corrupted?)" << std::endl;
+    //    return false;
+    //}
     
     // check header data is consistent
     if ((numBytesPerSecond != (numChannels * sampleRate * bitDepth) / 8) || (numBytesPerBlock != (numChannels * numBytesPerSample)))

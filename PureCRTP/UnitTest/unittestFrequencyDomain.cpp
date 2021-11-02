@@ -1,6 +1,7 @@
 #include "unittest.h"
 #include "../src/FrequencyDomain/BeamformerAdaptive.h"
 #include "../src/FrequencyDomain/CriticalBands.h"
+#include "../src/FrequencyDomain/Deconvolver.h"
 #include "../src/FrequencyDomain/DetectTonal.h"
 #include "../src/FrequencyDomain/DetectTonalPowerMin.h"
 #include "../src/FrequencyDomain/DetectTransient.h"
@@ -8,6 +9,7 @@
 #include "../src/FrequencyDomain/DetectVoiceActivation.h"
 #include "../src/FrequencyDomain/EchoCancellerMomentum.h"
 #include "../src/FrequencyDomain/EchoCancellerNLMS.h"
+#include "../src/FrequencyDomain/EchoCancellerNLMSMinPow.h"
 #include "../src/FrequencyDomain/EchoCancellerToeplitz.h"
 #include "../src/FrequencyDomain/EchoSuppressionCovariance.h"
 #include "../src/FrequencyDomain/GainCalculation.h"
@@ -17,7 +19,11 @@
 #include "../src/FrequencyDomain/MinPhaseSpectrum.h"
 #include "../src/FrequencyDomain/NoiseEstimation.h"
 #include "../src/FrequencyDomain/NoiseSuppression.h"
+#include "../src/FrequencyDomain/PredictorNLMS.h"
 #include "../Utilities/AudioFile.h"
+// classes not under test, but used in tests
+#include "../src/Filterbank.h"
+
 
 using namespace InterfaceTests;
 
@@ -172,6 +178,7 @@ namespace FrequencyDomainTests
 			outputLog << "Running BeamformerAdaptiveTest->FilterCalculation: Testing the Filter calculation.\n";
 			BeamformerAdaptiveDebug beamformer;
 			auto c = beamformer.GetCoefficients();
+			c.NChannels = 2;
 			beamformer.Initialize(c);
 
 			auto Data = beamformer.GetPrivateData();
@@ -661,6 +668,123 @@ namespace FrequencyDomainTests
 		//}
 	};
 
+	TEST_CLASS(DeconvolverTest)
+	{
+		TEST_METHOD(Interface)
+		{
+			Deconvolver deconvolver;
+			auto c = deconvolver.GetCoefficients();
+			ArrayXXcf xFreq(c.NBands, c.NChannels);
+			xFreq.setRandom();
+			bool speechActivity = true;
+			I::Deconvolver input = { xFreq, speechActivity };
+			
+			ArrayXXcf output(c.NBands, c.NChannels);
+			auto flag = AlgorithmInterfaceTest<Deconvolver>(input, output);
+			Assert::IsTrue(flag);
+		}
+
+		TEST_METHOD(ProcessWavFiles)
+		{
+			outputLog << "Running DeconvolverTest->ProcessWavFiles: Testing the input/output.\n";
+
+			Deconvolver deconvolver;
+			FilterbankAnalysis filterbank;
+			FilterbankSynthesis filterbankInverse;
+			auto sF = filterbank.GetSetup();
+			auto sFs = filterbankInverse.GetSetup();
+			auto sD = deconvolver.GetSetup();
+
+			// Deconvolver settings
+			int filterLength = 20;
+			int NLow = 3;
+			int NSkip = 30;
+			float Beta = 0.5;
+			int NBeta = 400;
+
+			// Filterbank settings
+			int NChannels = 4;
+			int FrameSize = 512;
+			int FFTSize = 512;
+			int BufferSize = 128;
+			float Gain = 1;
+
+			auto NBands = FFTSize / 2 + 1;
+
+			sF.Coefficients.BufferSize = BufferSize;
+			sF.Coefficients.FFTSize = FFTSize;
+			sF.Coefficients.FrameSize = FrameSize;
+			sF.Coefficients.NChannels = NChannels;
+			sF.Parameters.Gain = Gain;
+			sF.Parameters.WindowType = sF.Parameters.HannWindow;
+			filterbank.Initialize(sF);
+
+			sFs.Coefficients.BufferSize = BufferSize;
+			sFs.Coefficients.FFTSize = FFTSize;
+			sFs.Coefficients.FrameSize = FrameSize;
+			sFs.Coefficients.NChannels = NChannels;
+			sFs.Parameters.Gain = Gain;
+			sFs.Parameters.WindowType = sFs.Parameters.HannWindow;
+			filterbankInverse.Initialize(sFs);
+			
+			sD.Coefficients.N = filterLength;
+			sD.Coefficients.NBands = NBands;
+			sD.Coefficients.NChannels = NChannels;
+			sD.Coefficients.NLow = NLow;
+			sD.Coefficients.NSkip = NSkip;
+			sD.Parameters.Beta = Beta;
+			sD.Parameters.NBeta = NBeta;
+			deconvolver.Initialize(sD);
+
+			AudioFile<float> audioFileIn, audioFileOut;
+
+			audioFileIn.setNumChannels(NChannels);
+			audioFileIn.setBitDepth(16);
+			audioFileIn.setSampleRate(16000);
+			Assert::IsTrue(audioFileIn.load("../../../../Datasets/wav/y_8channels.wav")); // compare with reference
+
+			audioFileOut.setNumChannels(NChannels);
+			audioFileOut.setBitDepth(16);
+			audioFileOut.setSampleRate(16000);
+			
+			int numFrames = audioFileIn.getNumSamplesPerChannel()/BufferSize;
+			double duration = 0;
+			for (auto i = 0; i < numFrames; i++)
+			{
+				ArrayXXf frame(BufferSize, NChannels);
+				ArrayXXcf Frame(NBands, NChannels), FrameOut(NBands, NChannels);
+				for (auto ichan = 0; ichan < NChannels; ichan++)
+				{
+					frame.col(ichan) = Map<ArrayXf>(&audioFileIn.samples[ichan][i*BufferSize], BufferSize);
+				}
+				filterbank.Process(frame, Frame);
+				bool speechActivity = true;
+				auto start = std::chrono::steady_clock::now();
+				deconvolver.Process({ Frame, speechActivity }, FrameOut);
+				auto end = std::chrono::steady_clock::now();
+				auto time = std::chrono::duration<double, std::micro>(end - start).count();
+				duration += time;
+				filterbankInverse.Process(FrameOut, frame);
+
+				for (auto ichan = 0; ichan < NChannels; ichan++)
+				{
+					for (auto j = 0; j < BufferSize; j++)
+					{
+						audioFileOut.samples[ichan].push_back(frame(j, ichan));
+
+					}
+				}
+			}
+			duration /= numFrames;
+			outputLog << "Execution time (average): " << duration << " us." << std::endl;
+
+			outputLog << "Saving file.\n";
+			audioFileOut.save("../../../../Temp/Deconvolver.wav", AudioFileFormat::Wave); // truncate to 24bits 
+
+			outputLog << "Test successful." << std::endl;
+		}
+	};
+
 	TEST_CLASS(DetectTonalPowerMinTest)
 	{
 		TEST_METHOD(Interface)
@@ -994,8 +1118,163 @@ namespace FrequencyDomainTests
 		}
 	};
 
+	TEST_CLASS(EchoCancellerNLMSMinPowTest)
+	{
+		TEST_METHOD(Interface)
+		{
+			outputLog << "Running EchoCancellerNLMSMinPowTest->Interface.\n";
+			EchoCancellerNLMSMinPow echoCanceller;
+			auto c = echoCanceller.GetCoefficients();
+			ArrayXXcf input1(c.NBands, c.NChannels);
+			ArrayXcf input2(c.NBands);
+			input1.setRandom();
+			input2.setRandom();
+			I::EchoCancellerNLMSMinPow input = { input1, input2 };
+			ArrayXXcf output(c.NBands, c.NChannels);
+			Assert::IsTrue(AlgorithmInterfaceTest<EchoCancellerNLMSMinPow>(input, output));
+		}
+	};
+
 	TEST_CLASS(EchoCancellerToeplitzTest)
 	{
+		TEST_METHOD(CompareWithNLMSTest)
+		{
+			int nChannels = 1;
+			int sampleRate = 16000;
+			int fftSize = 1024;
+			int blockSize = 256;
+
+			int nBands = fftSize / 2 + 1;
+
+			AudioFile<float> audioFileIn, audioFileRef, audioFileOut1, audioFileOut2;
+
+			audioFileIn.setNumChannels(nChannels);
+			audioFileIn.setBitDepth(16);
+			audioFileIn.setSampleRate(sampleRate);
+			Assert::IsTrue(audioFileIn.load("../../../../Datasets/wav/mic1.wav")); // compare with reference
+
+			audioFileRef.setNumChannels(1);
+			audioFileRef.setBitDepth(16);
+			audioFileRef.setSampleRate(sampleRate);
+			Assert::IsTrue(audioFileRef.load("../../../../Datasets/wav/rx.wav")); // compare with reference
+
+			audioFileOut1.setNumChannels(nChannels);
+			audioFileOut1.setBitDepth(16);
+			audioFileOut1.setSampleRate(sampleRate);
+
+			audioFileOut2.setNumChannels(nChannels);
+			audioFileOut2.setBitDepth(16);
+			audioFileOut2.setSampleRate(sampleRate);
+
+			EchoCancellerNLMS ecNLMS;
+			EchoCancellerNLMSMinPow ecNLMSMinPow;
+			EchoCancellerToeplitz ecToep;
+			FilterbankAnalysis filterbank;
+			FilterbankSynthesis filterbankInverse1, filterbankInverse2;
+			EchoSuppressionCovariance ecSup;
+
+			auto cECSUP = ecSup.GetCoefficients();
+			cECSUP.FilterbankRate = (float)sampleRate / blockSize;
+			cECSUP.NBands = nBands;
+			cECSUP.NChannels = nChannels;
+			cECSUP.NChannelsLoopback = 1;
+			ecSup.Initialize(cECSUP);
+
+			auto cNLMS = ecNLMS.GetCoefficients();
+			cNLMS.FilterbankRate = (float)sampleRate / blockSize;
+			cNLMS.FilterLength = 64;
+			cNLMS.NBands = nBands;
+			cNLMS.NChannels = nChannels;
+			ecNLMS.Initialize(cNLMS);
+
+			auto cNLMSMinPow = ecNLMSMinPow.GetCoefficients();
+			cNLMSMinPow.FilterbankRate = (float)sampleRate / blockSize;
+			//cNLMSMinPow.FilterLength = { 4, 8, 16, 32, 64 };
+			cNLMSMinPow.NBands = nBands;
+			cNLMSMinPow.NChannels = nChannels;
+			ecNLMSMinPow.Initialize(cNLMSMinPow);
+
+			auto cToep = ecToep.GetCoefficients();
+			cToep.FilterbankRate = (float)sampleRate / blockSize;
+			cToep.FilterLengthMilliseconds = 500;
+			cToep.NBands = nBands;
+			cToep.nBuffersInAnalysisFrame = fftSize / blockSize;
+			cToep.nBuffersInSynthesisFrame = fftSize / blockSize;
+			cToep.NChannels = nChannels;
+			ecToep.Initialize(cToep);
+
+			auto sFB = filterbank.GetSetup();
+			sFB.Coefficients.BufferSize = blockSize;
+			sFB.Coefficients.FFTSize = fftSize;
+			sFB.Coefficients.FrameSize = fftSize;
+			sFB.Coefficients.NChannels = nChannels+1;
+			sFB.Parameters.WindowType = sFB.Parameters.HannWindow;
+			filterbank.Initialize(sFB);
+
+			auto sFBI = filterbankInverse1.GetSetup();
+			sFBI.Coefficients.BufferSize = blockSize;
+			sFBI.Coefficients.FFTSize = fftSize;
+			sFBI.Coefficients.FrameSize = fftSize;
+			sFBI.Coefficients.NChannels = nChannels;
+			sFBI.Parameters.WindowType = sFBI.Parameters.HannWindow;
+			
+			filterbankInverse1.Initialize(sFBI);
+			filterbankInverse2.Initialize(sFBI);
+
+			int numFrames = audioFileIn.getNumSamplesPerChannel() / blockSize;
+			double duration1 = 0, duration2 = 0;
+			for (auto i = 0; i < numFrames-2; i++)
+			{
+				ArrayXXf frame(blockSize, nChannels + 1), frameOut1(blockSize, nChannels), frameOut2(blockSize, nChannels);
+				ArrayXXcf Frame(nBands, nChannels+1), FrameOut1(nBands, nChannels), FrameOut2(nBands, nChannels);
+				for (auto ichan = 0; ichan < nChannels; ichan++)
+				{
+					frame.col(ichan) = Map<ArrayXf>(&audioFileIn.samples[ichan][i*blockSize], blockSize);
+				}
+				frame.col(nChannels) = Map<ArrayXf>(&audioFileRef.samples[0][(i+2)*blockSize], blockSize); // RX signal
+
+				filterbank.Process(frame, Frame);
+
+				auto start = std::chrono::steady_clock::now();
+				ecNLMS.Process({ Frame.leftCols(nChannels), Frame.col(nChannels) }, FrameOut1);
+				auto end = std::chrono::steady_clock::now();
+				auto time = std::chrono::duration<double, std::micro>(end - start).count();
+				duration1 += time;
+
+				start = std::chrono::steady_clock::now();
+				ecNLMSMinPow.Process({ Frame.leftCols(nChannels), Frame.col(nChannels) }, FrameOut2);
+				//ecSup.Process({ FrameOut2, Frame.col(nChannels), Frame.leftCols(nChannels) - FrameOut2 }, FrameOut2);
+				//ecToep.Process({ Frame.leftCols(nChannels), Frame.col(nChannels) }, FrameOut2);
+				end = std::chrono::steady_clock::now();
+				time = std::chrono::duration<double, std::micro>(end - start).count();
+				duration2 += time;
+
+
+				filterbankInverse1.Process(FrameOut1, frameOut1);
+				filterbankInverse2.Process(FrameOut2, frameOut2);
+
+				for (auto ichan = 0; ichan < nChannels; ichan++)
+				{
+					for (auto j = 0; j < blockSize; j++)
+					{
+						audioFileOut1.samples[ichan].push_back(frameOut1(j, ichan));
+						audioFileOut2.samples[ichan].push_back(frameOut2(j, ichan));
+
+					}
+				}
+			}
+
+			duration1 /= numFrames;
+			duration2 /= numFrames;
+			outputLog << "Execution time NLMS (average): " << duration1 << " us.\n";
+			outputLog << "Execution time Toeplitz (average): " << duration2 << " us." << std::endl;
+
+			outputLog << "Saving file.\n";
+			audioFileOut1.save("../../../../Temp/NLMS.wav", AudioFileFormat::Wave); // truncate to 24bits 
+			audioFileOut2.save("../../../../Temp/Toeplitz.wav", AudioFileFormat::Wave); // truncate to 24bits 
+
+			outputLog << "Test successful." << std::endl;
+		}
 		TEST_METHOD(Interface)
 		{
 			outputLog << "Running EchoCancellerToeplitzTest->Interface.\n";
@@ -1034,8 +1313,8 @@ namespace FrequencyDomainTests
 			c.NBands = 256;
 			VAD.Initialize(c);
 
-			// run for .8 seconds with random noise
-			int Nend = int(.8f * c.FilterbankRate);
+			// run for 3 seconds with random noise
+			int Nend = int(3.0f * c.FilterbankRate);
 			bool Activity = false;
 			for (auto n = 0; n < Nend; n++)
 			{
@@ -1068,6 +1347,20 @@ namespace FrequencyDomainTests
 				}
 			}
 			outputLog << "Test succesful." << std::endl;
+		}
+	};
+
+	TEST_CLASS(PredictorNLMSTest)
+	{
+		TEST_METHOD(Interface)
+		{
+			outputLog << "Running PredictorNLMSTest->Interface.\n";
+			PredictorNLMS predictor;
+			auto c = predictor.GetCoefficients();
+			ArrayXXcf input(c.NBands, c.NChannels);
+			input.setRandom();
+			ArrayXXcf output(c.NBands, c.NChannels);
+			Assert::IsTrue(AlgorithmInterfaceTest<PredictorNLMS>(input, output));
 		}
 	};
 }

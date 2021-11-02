@@ -52,7 +52,7 @@ namespace InterfaceTests // this namespace contains InterfaceTest and InterfaceA
 		if (!flag) { outputLog << "ProcessOnTest failed: Initialize() returned false. \n"; return false; }
 		auto size = algo.GetAllocatedMemorySize();
 		algo.SetPersistentInput(persistent);
-		double duration = 1e10;
+		double duration = 0;
 		int checkSum = 0;
 		for (auto i = 0; i < 100;i++)
 		{
@@ -60,7 +60,7 @@ namespace InterfaceTests // this namespace contains InterfaceTest and InterfaceA
 			algo.Process(input, output);
 			auto end = std::chrono::steady_clock::now();
 			auto time = std::chrono::duration<double, std::micro>(end - start).count();
-			duration = std::min(duration, time);
+			duration += time / 100.f;//std::min(duration, time);
 			void *readPtr = &output;
 			for (auto j = 0; j < sizeof(Talgo::Output); j++) { checkSum += static_cast<uint8_t*>(readPtr)[j]; } // checkSum ensures that all outputs are actually written
 		}

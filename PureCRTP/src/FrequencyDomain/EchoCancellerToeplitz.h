@@ -18,7 +18,7 @@ private:
 	struct Coefficients
 	{
 		float FilterbankRate = 125.f;
-		float FilterLengthMilliseconds = 250.f;
+		float FilterLengthMilliseconds = 500.f;
 		int NBands = 257;
 		int NChannels = 2;
 		int nBuffersInAnalysisFrame = 4;
@@ -29,6 +29,8 @@ private:
 
 	struct Data
 	{
+		std::vector<Eigen::MatrixXcf> result;
+		Eigen::ConjugateGradient<Eigen::MatrixXcf, Eigen::Lower | Eigen::Upper> SolverCG;
 		std::vector<Eigen::MatrixXcf> Filters;
 		int FilterLength;
 		Eigen::MatrixXcf BuffersLoopback;
@@ -41,6 +43,7 @@ private:
 
 		void Reset()
 		{
+			for (auto &r : result) { r.setZero(); }
 			BuffersLoopback.setZero();
 			for (auto &filter : Filters) { filter.setZero(); }
 			Crx.setZero();
@@ -51,6 +54,9 @@ private:
 		bool InitializeMemory(const Coefficients& c)
 		{
 			FilterLength = std::max(static_cast<int>(c.FilterLengthMilliseconds * c.FilterbankRate * 1e-3f) - (c.nBuffersInAnalysisFrame + c.nBuffersInSynthesisFrame - 1), 0) + 1;
+			SolverCG.setMaxIterations(FilterLength/32);
+			result.resize(c.NBands);
+			for (auto &r : result) { r.resize(FilterLength, c.NChannels); }
 			FilterUpdatesPerFrame = static_cast<int>(c.NBands / FilterLength); // update all filters after FilterLength frames
 			beta = expf(-1.f / (c.FilterbankRate / FilterLength * c.FilterLengthMilliseconds * 1e-3f)); // time constant of covariance update equal to filter length in seconds
 			BuffersLoopback.resize(FilterLength, c.NBands);
@@ -64,6 +70,7 @@ private:
 		size_t GetAllocatedMemorySize() const
 		{
 			size_t size = 0;
+			for (auto &r : result) { size += r.GetAllocatedMemorySize(); }
 			for (auto& filter : Filters) { size += filter.GetAllocatedMemorySize(); }
 			size += BuffersLoopback.GetAllocatedMemorySize();
 			for (auto& crxy : Crxy) { size += crxy.GetAllocatedMemorySize(); }
@@ -89,13 +96,14 @@ private:
 		// Put loopback signals into buffer
 		D.BuffersLoopback.row(D.CircCounter) = xFreq.Loopback.matrix().adjoint();
 
-		yFreq = xFreq.Input;
 		// RX covariance
+		Eigen::ArrayXXcf micEst = xFreq.Input;
 		for (int ibin = 0; ibin < C.NBands; ibin++)
 		{
 			const auto iLoopback = D.BuffersLoopback.col(ibin);
 			D.Crx.col(ibin).head(filterLength1) += xFreq.Loopback(ibin) * iLoopback.segment(D.CircCounter, filterLength1);
 			D.Crx.col(ibin).segment(filterLength1, D.CircCounter) += xFreq.Loopback(ibin) * iLoopback.head(D.CircCounter);
+			
 			for (auto channel = 0; channel < C.NChannels; channel++)
 			{
 				// cross RX and TX covariance
@@ -103,10 +111,11 @@ private:
 				D.Crxy[channel].col(ibin).segment(filterLength1, D.CircCounter) += xFreq.Input(ibin, channel) * iLoopback.head(D.CircCounter);
 				// do filter
 				const auto iFilter = D.Filters[channel].col(ibin);
-				yFreq(ibin, channel) -= iLoopback.segment(D.CircCounter, filterLength1).adjoint() * iFilter.head(filterLength1);
-				yFreq(ibin, channel) -= iLoopback.head(D.CircCounter).adjoint() * iFilter.tail(D.CircCounter);
+				micEst(ibin, channel) -=  iLoopback.segment(D.CircCounter, filterLength1).adjoint() * iFilter.head(filterLength1);
+				micEst(ibin, channel) -= iLoopback.head(D.CircCounter).adjoint() * iFilter.tail(D.CircCounter);
 			}	
 		}
+		yFreq = (xFreq.Input.abs2() > micEst.abs2()).select(micEst, xFreq.Input);
 
 		for (int i = 0; i < D.FilterUpdatesPerFrame; i++)
 		{
@@ -116,11 +125,18 @@ private:
 			{
 				RToep.col(channel) = D.Crxy[channel].col(D.FilterUpdateCounter);
 			}
-			Eigen::ArrayXXcf result(D.FilterLength, C.NChannels);
-			TSolver.Process({ D.Crx.col(D.FilterUpdateCounter).conjugate(), RToep }, result);
+			Eigen::MatrixXcf AToep(D.FilterLength, D.FilterLength);
+			for (auto f = 0; f < D.FilterLength; f++)
+			{
+				AToep.col(f).segment(f, D.FilterLength - f) = D.Crx.col(D.FilterUpdateCounter).head(D.FilterLength - f);
+				AToep.col(f).head(f) = D.Crx.col(D.FilterUpdateCounter).segment(1, f).colwise().reverse().conjugate();
+			}
+			//Eigen::ArrayXXcf result(D.FilterLength, C.NChannels);
+			TSolver.Process({ D.Crx.col(D.FilterUpdateCounter).conjugate(), RToep }, D.result[D.FilterUpdateCounter]);
+			//D.result[D.FilterUpdateCounter] = D.SolverCG.compute(AToep).solveWithGuess(RToep, D.result[D.FilterUpdateCounter]);
 			for (auto channel = 0; channel < C.NChannels; channel++)
 			{
-				D.Filters[channel].col(D.FilterUpdateCounter) = result.col(channel);
+				D.Filters[channel].col(D.FilterUpdateCounter) = D.result[D.FilterUpdateCounter].col(channel);
 			}
 
 			// Apply forgetting factor to Crx and Crxy

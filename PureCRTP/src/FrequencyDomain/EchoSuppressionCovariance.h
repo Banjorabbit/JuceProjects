@@ -39,7 +39,6 @@ private:
 	struct Data
 	{
 		Eigen::ArrayXf LoopbackPower, LoopbackVariance;
-		Eigen::ArrayXXf Gain;
 		Eigen::ArrayXXcf Covariance;
 		float LoopbackPowerLambda, CovarianceLambda;
 		float GainMinimum, GainAttackLambda, GainReleaseLambda;
@@ -49,14 +48,12 @@ private:
 			Covariance.setConstant(1e-10f);
 			LoopbackVariance.setConstant(1e-10f);
 			LoopbackPower.setZero();
-			Gain.setOnes();
 		}
 		bool InitializeMemory(const Coefficients& c) 
 		{
 			LoopbackVariance.resize(c.NBands);
 			LoopbackPower.resize(c.NBands);
 			Covariance.resize(c.NBands, c.NChannels);
-			Gain.resize(c.NBands, c.NChannels);
 			return true;
 		}
 		size_t GetAllocatedMemorySize() const 
@@ -64,7 +61,6 @@ private:
 			size_t size = 0;
 			size += LoopbackPower.GetAllocatedMemorySize(); 
 			size += LoopbackVariance.GetAllocatedMemorySize();
-			size += Gain.GetAllocatedMemorySize();
 			size += Covariance.GetAllocatedMemorySize();
 			return size;
 		}
@@ -88,6 +84,8 @@ private:
 		{
 			auto setup = gainCalculation.GetSetup();
 			setup.Coefficients.FilterbankRate = C.FilterbankRate;
+			setup.Coefficients.NBands = C.NBands;
+			setup.Coefficients.NChannels = 1;
 			setup.Parameters.Method = setup.Parameters.Smoothing;
 			setup.Parameters.MinimumdB = -30;
 			flag &= gainCalculation.Initialize(setup);
@@ -101,13 +99,14 @@ private:
 		D.LoopbackPower += D.LoopbackPowerLambda * (power - D.LoopbackPower);
 		D.LoopbackVariance += (power > 1e-10f).select(D.CovarianceLambda * (power - D.LoopbackVariance), 0.f);
 		Eigen::ArrayXf snr = D.LoopbackVariance / power.max(D.LoopbackPower).max(1e-30f);
+		Eigen::ArrayXXf gain(C.NBands, C.NChannels);
 		for (auto channel = 0; channel < xFreq.Input.cols(); channel++)
 		{
 			D.Covariance.col(channel) += (power > 1e-10f).select(D.CovarianceLambda * (xFreq.Input.col(channel)*xFreq.MicEstimated.col(channel).conjugate() - D.Covariance.col(channel)), 0.f);
 			Eigen::ArrayXf snrAposteriori = xFreq.Input.col(channel).abs2() * snr / D.Covariance.col(channel).abs();
-			GainCalculation[channel].Process(snrAposteriori, D.Gain.col(channel));
+			GainCalculation[channel].Process(snrAposteriori, gain.col(channel));
 		}
-		yFreq = xFreq.Input * D.Gain;
+		yFreq = xFreq.Input * gain;
 	}
 
 	void ProcessOff(Input xFreq, Output yFreq) { yFreq = xFreq.Input; }

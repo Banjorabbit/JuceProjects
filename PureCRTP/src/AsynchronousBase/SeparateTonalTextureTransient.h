@@ -40,7 +40,7 @@ private:
 
 	struct Parameters 
 	{
-		enum SelectOutput { TONAL, TEXTURE, TRANSIENT, SUM};
+		enum SelectOutput { TONAL, TEXTURE, TRANSIENT, TONAL_TEXTURE, TONAL_TRANSIENT, TEXTURE_TRANSIENT, SUM};
 		SelectOutput OutputSelector = TONAL;
 	} P;
 
@@ -89,14 +89,17 @@ private:
 		DelayLine.Process(xTime, xTexture);
 		xTexture -= xTonal;
 		TransientSeparator.Process(xTexture, xTransient);
-		//xTexture -= xTransient;		
+		xTexture -= xTransient;		
 		switch (P.OutputSelector)
 		{
-		case Parameters::TONAL: yTime = xTonal; break;
-		case Parameters::TEXTURE: yTime = xTexture; break;
-		case Parameters::TRANSIENT: yTime = xTransient; break;
+		case Parameters::TONAL:				yTime = xTonal; break;
+		case Parameters::TEXTURE:			yTime = xTexture; break;
+		case Parameters::TRANSIENT:			yTime = xTransient; break;
+		case Parameters::TONAL_TEXTURE:		yTime = xTonal + xTexture; break;
+		case Parameters::TONAL_TRANSIENT:	yTime = xTonal + xTransient; break;
+		case Parameters::TEXTURE_TRANSIENT: yTime = xTexture + xTransient; break;
 		case Parameters::SUM: // go to default
-		default: yTime = xTonal + xTexture + xTransient;
+		default:							yTime = xTonal + xTexture + xTransient;
 		}
 	}
 

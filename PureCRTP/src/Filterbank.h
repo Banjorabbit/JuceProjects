@@ -28,7 +28,7 @@ private:
 
 	struct Parameters
 	{
-		enum WindowTypes { HannWindow , Rectangular, UserDefined};
+		enum WindowTypes { HannWindow , SqrtHannWindow, Rectangular, UserDefined};
 		WindowTypes WindowType = HannWindow;
 		float Gain = 1;
 	} P;
@@ -66,6 +66,9 @@ private:
 			{
 			case Parameters::HannWindow:
 				Window = GetHannWindow(c.FrameSize);
+				break;
+			case Parameters::SqrtHannWindow:
+				Window = GetHannWindow(c.FrameSize).sqrt();
 				break;
 			case Parameters::Rectangular:
 				Window.setOnes();
@@ -114,6 +117,8 @@ public:
 	FFTRealInverse FFTInv;
 	Eigen::ArrayXf GetWindow() const { return D.Window; }
 
+	static Eigen::ArrayXf GetHannWindow(const int size) { return .5f * (1.f - Eigen::ArrayXf::LinSpaced(size, 0, 2.f * static_cast<float>(PI) * (size - 1) / size).cos()); };
+
 private:
 	struct Coefficients
 	{
@@ -125,7 +130,7 @@ private:
 
 	struct Parameters
 	{
-		enum WindowTypes { HannWindow , Rectangular};
+		enum WindowTypes { HannWindow , SqrtHannWindow, Rectangular};
 		WindowTypes WindowType = HannWindow;
 		float Gain = 1;
 	} P;
@@ -162,7 +167,10 @@ private:
 			switch (p.WindowType)
 			{
 			case Parameters::HannWindow:
-				Window = .3333333333333333f * (1.f - Eigen::ArrayXf::LinSpaced(c.FrameSize, 0, 2.f * static_cast<float>(PI) * (c.FrameSize - 1) / c.FrameSize).cos());
+				Window = GetHannWindow(c.FrameSize);
+				break;
+			case Parameters::SqrtHannWindow:
+				Window = GetHannWindow(c.FrameSize).sqrt();
 				break;
 			case Parameters::Rectangular:
 				Window.setOnes();

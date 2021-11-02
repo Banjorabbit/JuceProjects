@@ -2,12 +2,18 @@
 #include "../BaseClasses/PureCRTP.h"
 #include "NoiseEstimation.h"
 
+// Detect voice activation based on the short-time energy. The output is a single bool that integrates the voice activation accross channels and frequency bands. 
+// If detection is needed for each frequency band, then use getActivityArray()
+//
+// author: Kristian Timm Andersen
 class DetectVoiceActivation : public Base<DetectVoiceActivation, I::Complex2D, O::Boolean>
 {
 	friend Base<DetectVoiceActivation, I::Complex2D, O::Boolean>;
 
 public:
 	VectorAlgo<NoiseEstimationSPP> NoiseActivities;
+
+	Eigen::Array<bool, Eigen::Dynamic, 1> getActivityArray() const { return D.activityArray; }
 
 private:
 	struct Coefficients 
@@ -27,10 +33,22 @@ private:
 	
 	struct Data
 	{
-		Eigen::ArrayXXf PowerNoises;
-		void Reset() { PowerNoises.setConstant(1e-5f); }
-		bool InitializeMemory(const Coefficients& c) { PowerNoises.resize(c.NBands, c.NChannels); return true; }
-		size_t GetAllocatedMemorySize() const { return PowerNoises.GetAllocatedMemorySize(); }
+		Eigen::Array<bool, Eigen::Dynamic, 1> activityArray;
+		void Reset() 
+		{ 
+			activityArray.setConstant(false);
+		}
+		bool InitializeMemory(const Coefficients& c) 
+		{ 
+			activityArray.resize(c.NBands);
+			return true; 
+		}
+		size_t GetAllocatedMemorySize() const 
+		{ 
+			size_t size = 0;
+			size += activityArray.GetAllocatedMemorySize();
+			return size;
+		}
 		void OnParameterChange(const Parameters& p, const Coefficients& c)	{}
 	} D;
 
@@ -48,18 +66,19 @@ private:
 
 	void ProcessOn(Input xFreq, Output activityFlag)
 	{
-		Eigen::Array<bool, Eigen::Dynamic, 1> activityArray = Eigen::Array<bool, Eigen::Dynamic, 1>::Constant(C.NBands, false);
+		D.activityArray.setConstant(false);
 		activityFlag = false;
 		// fuse channels into one activity detector
 		for (auto channel = 0; channel < xFreq.cols(); channel++)
 		{
 			Eigen::ArrayXf activityChannel(C.NBands);
 			Eigen::ArrayXf powerNoisy = xFreq.col(channel).abs2();
-			NoiseActivities[channel].Process(powerNoisy, { D.PowerNoises.col(channel), activityChannel }); // Run noise estimator and activity detector
-			activityFlag |= powerNoisy.mean() > (D.PowerNoises.col(channel).mean() * P.SnrThreshold * P.VADThreshold);
-			activityArray = activityArray.operator||(activityChannel > (P.ActivityThreshold * P.VADThreshold));
+			Eigen::ArrayXf powerNoise(C.NBands);
+			NoiseActivities[channel].Process(powerNoisy, { powerNoise, activityChannel }); // Run noise estimator and activity detector
+			activityFlag |= powerNoisy.mean() > (powerNoise.mean() * P.SnrThreshold * P.VADThreshold);
+			D.activityArray = D.activityArray.operator||(activityChannel > (P.ActivityThreshold * P.VADThreshold));
 		}
-		activityFlag |= static_cast<float>(activityArray.count()) > (P.ActivityMeanThreshold * P.VADThreshold * C.NBands);
+		activityFlag |= static_cast<float>(D.activityArray.count()) > (P.ActivityMeanThreshold * P.VADThreshold * C.NBands);
 	}
 
 	void ProcessOff(Input xFreq, Output activityFlag) { activityFlag = false; }

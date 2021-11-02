@@ -167,7 +167,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\UnitTest\unittest.cpp" />
-    <ClCompile Include="..\..\..\UnitTest\unittestAsynchronousStreaming.cpp" />
+    <ClCompile Include="..\..\..\UnitTest\unittestAsynchronousBase.cpp" />
     <ClCompile Include="..\..\..\UnitTest\unittestEigen.cpp" />
     <ClCompile Include="..\..\..\UnitTest\unittestFrequencyDomain.cpp" />
     <ClCompile Include="..\..\..\UnitTest\unittestUtilities.cpp" />

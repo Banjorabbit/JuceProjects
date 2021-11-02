@@ -187,6 +187,7 @@ private:
 
 			Predictor[channel].Process({ xFreq.col(channel), xFreqDelayed.col(channel) }, yFreq.col(channel)); // predictor actually outputs the non-periodic part!
 		}
+		yFreq = (xFreq.abs2() < yFreq.abs2()).select(xFreq, yFreq); // only use predictor if energy is less or equal to input
 
 		FilterbankInverse.Process(xFreq - yFreq, yTime);
 	}

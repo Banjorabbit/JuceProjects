@@ -29,14 +29,25 @@ class NoiseEstimationSPP : public Base<NoiseEstimationSPP, I::Real2D, O::NoiseEs
 	struct Data
 	{
 		Eigen::ArrayXXf ActivityMean;
+		Eigen::ArrayXXf PowerNoise;
 		float ActivityMeanLambda, NoiseUpdateLambda, Offset, Scaling, ScalingLin;
-		void Reset() { ActivityMean.setConstant(0.5f); };
+		void Reset() 
+		{ 
+			ActivityMean.setConstant(0.5f); 
+			PowerNoise.setZero();
+		};
 		bool InitializeMemory(const Coefficients& c)
 		{
 			ActivityMean.resize(c.NBands, c.NChannels);
+			PowerNoise.resize(c.NBands, c.NChannels);
 			return true;
 		}
-		size_t GetAllocatedMemorySize() const { return ActivityMean.GetAllocatedMemorySize(); }
+		size_t GetAllocatedMemorySize() const 
+		{ 
+			size_t size = PowerNoise.GetAllocatedMemorySize();
+			size += ActivityMean.GetAllocatedMemorySize();
+			return size;
+		}
 		void OnParameterChange(const Parameters& p, const Coefficients& c)
 		{
 			ActivityMeanLambda = 1.f - expf(-1.f / (c.FilterbankRate*p.ActivityMeanTConstant));
@@ -51,7 +62,7 @@ class NoiseEstimationSPP : public Base<NoiseEstimationSPP, I::Real2D, O::NoiseEs
 	void ProcessOn(Input powerNoisy, Output y)
 	{
 		// Calculate activity detection
-		y.Activity = D.ScalingLin * (D.Scaling * powerNoisy / y.PowerNoise + D.Offset).cwiseMin(25.f).exp();
+		y.Activity = D.ScalingLin * (D.Scaling * powerNoisy / (D.PowerNoise + 1e-20f) + D.Offset).cwiseMin(25.f).exp();
 		y.Activity /= (1.f + y.Activity);
 
 		// Update long term activity
@@ -59,7 +70,8 @@ class NoiseEstimationSPP : public Base<NoiseEstimationSPP, I::Real2D, O::NoiseEs
 		y.Activity = (D.ActivityMean > 0.99f).select(y.Activity.cwiseMin(.99f), y.Activity);
 
 		// Update Noise
-		y.PowerNoise += D.NoiseUpdateLambda * (1.f - y.Activity) * (powerNoisy - y.PowerNoise);
+		D.PowerNoise += D.NoiseUpdateLambda * (1.f - y.Activity) * (powerNoisy - D.PowerNoise);
+		y.PowerNoise = D.PowerNoise;
 	}
 
 	void ProcessOff(Input powerNoisy, Output y) { y.PowerNoise = powerNoisy; y.Activity.setZero(); }
