@@ -123,6 +123,8 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\..\eigen;..\..\Utilities;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -142,6 +144,8 @@
       <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\..\eigen;..\..\Utilities;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -163,8 +167,10 @@
     <ClInclude Include="..\..\src\AsynchronousBase\PitchShiftAdaptiveResolution.h" />
     <ClInclude Include="..\..\src\AsynchronousBase\PitchShiftPhaseLocking.h" />
     <ClInclude Include="..\..\src\AsynchronousBase\SeparateTonal.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\SeparateTonalPrediction.h" />
     <ClInclude Include="..\..\src\AsynchronousBase\SeparateTonalTextureTransient.h" />
     <ClInclude Include="..\..\src\AsynchronousBase\SeparateTransient.h" />
+    <ClInclude Include="..\..\src\AsynchronousBase\SpatialNoiseReduction.h" />
     <ClInclude Include="..\..\src\AsynchronousBase\VirtualizationHeadphones.h" />
     <ClInclude Include="..\..\src\BaseClasses\AsynchronousBase.h" />
     <ClInclude Include="..\..\src\BaseClasses\Base.h" />
@@ -186,11 +192,13 @@
     <ClInclude Include="..\..\src\FIRMinPhase.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\BeamformerAdaptive.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\CriticalBands.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\Deconvolver.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\DetectTonalPowerMin.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\DetectTransient.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\DetectTransientSmooth.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerMomentum.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerNLMS.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerNLMSMinPow.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerToeplitz.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\EchoSuppressionCovariance.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\GainCalculation.h" />
@@ -202,6 +210,7 @@
     <ClInclude Include="..\..\src\FrequencyDomain\NoiseSuppression.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\DetectTonal.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\DetectVoiceActivation.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\PredictorNLMS.h" />
     <ClInclude Include="..\..\src\InterpolationCubic.h" />
     <ClInclude Include="..\..\src\SpectralMass.h" />
     <ClInclude Include="..\..\src\StateVariableFilter.h" />
@@ -211,6 +220,9 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\AsynchronousBase\VirtualizationHeadphones.cpp" />
     <ClCompile Include="..\..\src\FrequencyDomain\CriticalBands.cpp" />
+    <ClCompile Include="..\..\src\FrequencyDomain\EchoCancellerNLMS.cpp" />
+    <ClCompile Include="..\..\src\FrequencyDomain\EchoCancellerNLMSMinPow.cpp" />
+    <ClCompile Include="..\..\src\FrequencyDomain\PredictorNLMS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

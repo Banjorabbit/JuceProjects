@@ -5,9 +5,16 @@ class GainCalculationSimple : public Base<GainCalculationSimple>
 {
 	friend Base<GainCalculationSimple>;
 
+public:
+	Eigen::ArrayXXf GetGain() const { return D.Gain; }
+
+private:
+
 	struct Coefficients
 	{
 		float FilterbankRate = 125;
+		int NBands = 257;
+		int NChannels = 2;
 	} C;
 
 	struct Parameters
@@ -24,10 +31,11 @@ class GainCalculationSimple : public Base<GainCalculationSimple>
 
 	struct Data
 	{
+		Eigen::ArrayXXf Gain;
 		float Minimum, AttackLambda, ReleaseLambda;
-		void Reset() {}
-		bool InitializeMemory(const Coefficients& c) { return true; }
-		size_t GetAllocatedMemorySize() const { return 0; }
+		void Reset() { Gain.setOnes(); }
+		bool InitializeMemory(const Coefficients& c) { Gain.resize(c.NBands, c.NChannels); return true; }
+		size_t GetAllocatedMemorySize() const { return Gain.GetAllocatedMemorySize(); }
 		void OnParameterChange(const Parameters& p, const Coefficients& c) 
 		{
 			Minimum = powf(10.f, p.MinimumdB * .05f);
@@ -36,17 +44,17 @@ class GainCalculationSimple : public Base<GainCalculationSimple>
 		}
 	} D;
 
-	void ProcessOn(Input snrAposteriori, Output gain)
+	void ProcessOn(Input snrAposteriori, Output output)
 	{
 		Eigen::ArrayXXf power = snrAposteriori.min(100.f).max(1.01f);
 		switch (P.Method)
 		{
 		case Parameters::Methods::SimpleApriori :
-			power *= (P.AprioriSmoother * (gain*gain - 1.f) + 1.f);
+			power *= (P.AprioriSmoother * (D.Gain.abs2() - 1.f) + 1.f);
 			power += P.AprioriSmoother - 1.f; // snr
 			break;
 		case Parameters::Methods::SimpleTwoStep :
-			power *= (P.AprioriSmoother * (gain*gain - 1.f) + 1.f);
+			power *= (P.AprioriSmoother * (D.Gain.abs2() - 1.f) + 1.f);
 			power += P.AprioriSmoother - 1.f; // snr
 			power = (power / (power + P.SpeechDistortionRatio)).pow(P.Exponential).max(D.Minimum); // gain
 			power *= snrAposteriori * power; // two step snr
@@ -58,8 +66,9 @@ class GainCalculationSimple : public Base<GainCalculationSimple>
 			power -= 1.f; // default is the same as smoothing
 		}
 		power = (power / (power + P.SpeechDistortionRatio)).pow(P.Exponential).max(D.Minimum); // gain
-		power -= gain; // gain difference
-		gain += (power > 0).select(D.AttackLambda*power, D.ReleaseLambda*power); // smooth gain in time
+		power -= D.Gain; // gain difference
+		D.Gain += (power > 0).select(D.AttackLambda*power, D.ReleaseLambda*power); // smooth gain in time
+		output = D.Gain;
 	}
 
 	void ProcessOff(Input snrAposteriori, Output gain) { gain.setOnes(); }

@@ -4,6 +4,7 @@
 #define EIGEN_DENSEBASE_PLUGIN "GetSizeOfEigen.h" //  member function added to Eigen DenseBase class to get dynamic memory size of array and matrices
 #define EIGEN_MPL2_ONLY // don't allow LGPL licensed code from Eigen
 #include <Eigen/Dense> // Eigen Library. Potentially redundant since this is also included in AsynchronousBase.h and InputOutput.h
+#include <Eigen/IterativeLinearSolvers>
 #pragma warning (pop)
 #include "Base.h" // Base class
 #include "VectorAlgo.h" // VectorAlgo class

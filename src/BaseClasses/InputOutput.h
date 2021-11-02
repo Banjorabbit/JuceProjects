@@ -22,6 +22,7 @@ struct I
 
 	using Real = In<Eigen::ArrayXf>;
 	using Complex = In<Eigen::ArrayXcf>;
+	using Bool = In<Eigen::Array<bool, Eigen::Dynamic, 1>>;
 	using Real2D = In<Eigen::ArrayXXf>;
 	using Complex2D = In<Eigen::ArrayXXcf>;
 	using Bool2D = In<Eigen::Array<bool, Eigen::Dynamic, Eigen::Dynamic>>;
@@ -37,9 +38,11 @@ struct I
 	struct ComplexComplex { Complex C1; Complex C2; };
 
 	struct BeamformerAdaptive;
+	struct Deconvolver;
 	struct EchoSuppressionCovariance;
 	struct EchoCancellerMomentum;
 	struct EchoCancellerNLMS;
+	struct EchoCancellerNLMSMinPow;
 	struct EchoCancellerToeplitz;
 	struct CubicSpline;
 	struct DesignFIRNonParametric;

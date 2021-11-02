@@ -185,6 +185,8 @@
     <ClInclude Include="..\..\src\FrequencyDomain\CriticalBands.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\DetectTransient.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerMomentum.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerNLMS.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerNLMSPA.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\EchoSuppressionCovariance.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\GainCalculation.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\InterpolateTonal.h" />
@@ -195,13 +197,17 @@
     <ClInclude Include="..\..\src\FrequencyDomain\NoiseSuppression.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\DetectTonal.h" />
     <ClInclude Include="..\..\src\FrequencyDomain\DetectVoiceActivation.h" />
+    <ClInclude Include="..\..\src\FrequencyDomain\PredictorNLMS.h" />
     <ClInclude Include="..\..\src\InterpolationCubic.h" />
     <ClInclude Include="..\..\src\SpectralMass.h" />
     <ClInclude Include="..\..\src\Upsampling2XCubic.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\AsynchronousStreaming\VirtualizationHeadphones.cpp" />
+    <ClCompile Include="..\..\src\AsynchronousBase\VirtualizationHeadphones.cpp" />
     <ClCompile Include="..\..\src\FrequencyDomain\CriticalBands.cpp" />
+    <ClCompile Include="..\..\src\FrequencyDomain\EchoCancellerNLMS.cpp" />
+    <ClCompile Include="..\..\src\FrequencyDomain\EchoCancellerNLMSPA.cpp" />
+    <ClCompile Include="..\..\src\FrequencyDomain\PredictorNLMS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

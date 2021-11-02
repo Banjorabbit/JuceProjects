@@ -4,11 +4,107 @@
 #include "../Utilities/pffft.h"
 #include "../Utilities/ApproximationMath.h"
 #include "../Utilities/HelperFunctions.h"
+#include "../Utilities/solveLinearSystem.h"
 
 namespace UtilitiesTests
 {
 
 	LoggerOutput outputLog;
+
+	TEST_CLASS(SolveLinearSystemTest)
+	{
+		TEST_METHOD(SpeedTest)
+		{
+			int N = 20;
+			int nMic = 4;
+			Eigen::MatrixXcf A(N, N);
+			Eigen::MatrixXcf b(N, nMic);
+			Eigen::VectorXcf xVec(N);
+			Eigen::VectorXcf yVec(nMic);
+			A.setZero();
+			b.setZero();
+			for (int i = 0; i < std::max(N, nMic); i++)
+			{
+				xVec.setRandom();
+				yVec.setRandom();
+				A += xVec * xVec.adjoint();
+				b += xVec * yVec.adjoint();
+			}
+
+			outputLog << "A: " << A << std::endl;
+			outputLog << "b: " << b << std::endl;
+
+			Eigen::MatrixXcf outputLDLT = b;
+			auto start = std::chrono::high_resolution_clock::now();
+			solveLinearSystemLDLT((float *)A.data(), (float *)outputLDLT.data(), N, nMic);
+			auto end = std::chrono::high_resolution_clock::now();
+			auto diff = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+			outputLog << "Execution time LDLT: " << diff << std::endl;
+
+			Eigen::MatrixXcf outputLLT = b;
+			start = std::chrono::high_resolution_clock::now();
+			solveLinearSystemLLT((float *)A.data(), (float *)outputLLT.data(), N, nMic);
+			end = std::chrono::high_resolution_clock::now();
+			diff = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+			outputLog << "Execution time LLT: " << diff << std::endl;
+			outputLog << "error LLT: " << (outputLLT - outputLDLT).array().abs2().sum() / outputLDLT.array().abs2().sum() << std::endl;
+
+			Eigen::MatrixXcf outputQR = b;
+			start = std::chrono::high_resolution_clock::now();
+			solveLinearSystemQR((float *)A.data(), (float *)outputQR.data(), N, nMic);
+			end = std::chrono::high_resolution_clock::now();
+			diff = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+			outputLog << "Execution time QR: " << diff << std::endl;
+			outputLog << "error QR: " << (outputQR - outputLDLT).array().abs2().sum() / outputLDLT.array().abs2().sum() << std::endl;
+
+			Eigen::MatrixXcf outputQRCol = b;
+			start = std::chrono::high_resolution_clock::now();
+			solveLinearSystemQRCol((float *)A.data(), (float *)outputQRCol.data(), N, nMic);
+			end = std::chrono::high_resolution_clock::now();
+			diff = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+			outputLog << "Execution time QRCol: " << diff << std::endl;
+			outputLog << "error QRCol: " << (outputQRCol - outputLDLT).array().abs2().sum() / outputLDLT.array().abs2().sum() << std::endl;
+
+			Eigen::MatrixXcf outputQRFull = b;
+			start = std::chrono::high_resolution_clock::now();
+			solveLinearSystemQRFull((float *)A.data(), (float *)outputQRFull.data(), N, nMic);
+			end = std::chrono::high_resolution_clock::now();
+			diff = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+			outputLog << "Execution time QRFull: " << diff << std::endl;
+			outputLog << "error QRFull: " << (outputQRFull - outputLDLT).array().abs2().sum() / outputLDLT.array().abs2().sum() << std::endl;
+
+			Eigen::MatrixXcf outputLU = b;
+			start = std::chrono::high_resolution_clock::now();
+			solveLinearSystemLU((float *)A.data(), (float *)outputLU.data(), N, nMic);
+			end = std::chrono::high_resolution_clock::now();
+			diff = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+			outputLog << "Execution time LU: " << diff << std::endl;
+			outputLog << "error LU: " << (outputLU - outputLDLT).array().abs2().sum() / outputLDLT.array().abs2().sum() << std::endl;
+
+			Eigen::MatrixXcf outputLUFull = b;
+			start = std::chrono::high_resolution_clock::now();
+			solveLinearSystemLUFull((float *)A.data(), (float *)outputLUFull.data(), N, nMic);
+			end = std::chrono::high_resolution_clock::now();
+			diff = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+			outputLog << "Execution time LUFull: " << diff << std::endl;
+			outputLog << "error LUFull: " << (outputLUFull - outputLDLT).array().abs2().sum() / outputLDLT.array().abs2().sum() << std::endl;
+
+			Eigen::MatrixXcf outputSVD = b;
+			start = std::chrono::high_resolution_clock::now();
+			solveLinearSystemSVD((float *)A.data(), (float *)outputSVD.data(), N, nMic);
+			end = std::chrono::high_resolution_clock::now();
+			diff = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+			outputLog << "Execution time SVD: " << diff << std::endl;
+			outputLog << "error SVD: " << (outputSVD - outputLDLT).array().abs2().sum() / outputLDLT.array().abs2().sum() << std::endl;
+
+			start = std::chrono::high_resolution_clock::now();
+			LLT<MatrixXcf> llt;
+			Eigen::MatrixXcf outputs = llt.compute(A).solve(b);
+			end = std::chrono::high_resolution_clock::now();
+			diff = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+			outputLog << "Execution time LLT (separate out computation): " << diff << std::endl;
+		}
+	};
 
 	TEST_CLASS(HelperFunctionsTest)
 	{

@@ -1,16 +1,26 @@
 #include "unittest.h"
 #include "../Utilities/pffft.h"
+#include "../Utilities/HelperFunctions.h"
 
 namespace EigenTests
 {
 	TEST_CLASS(EigenMethodsTest)
 	{
+		TEST_METHOD(HeadZeroTest)
+		{
+			ArrayXf x(4);
+			x << 1.f, 2.f, 3.f, 4.f;
+			int n = 0;
+			outputLog << "x.head(0).sum(): " << x.head(n).sum() << std::endl;
+		}
+
 		TEST_METHOD(Index1DimensionIn2DimensionalArrayTest)
 		{
 			ArrayXXf A(3, 2);
 			A << 1.f, 2.f, 3.f, 4.f, 5.f, 6.f;
 			outputLog << "A: " << A << std::endl;
 			outputLog << "A(0): " << A(0) << ", A(1): " << A(1) << ", A(2): " << A(2) << ", A(3): " << A(3) << ", A(4): " << A(4) << ", A(5): " << A(5) << std::endl;
+			outputLog << "A(0,0): " << A(0,0) << ", A(1,0): " << A(1,0) << ", A(2,0): " << A(2,0) << ", A(0,1): " << A(0,1) << ", A(1,1): " << A(1,1) << ", A(2,1): " << A(2,1) << std::endl;
 		}
 
 		TEST_METHOD(MultiplyWithBool)
@@ -38,6 +48,24 @@ namespace EigenTests
 		{
 			ArrayXf test(4);
 			outputLog << "Columns: " << test.cols() << std::endl;
+		}
+
+		TEST_METHOD(MapTest)
+		{
+			int size = 10;
+			ArrayXf A(size), B(size);
+			float ref[] = { 0,1,2,3,4,5,6,7,8,9 };
+			A.setOnes();
+			B.setZero();
+			Map<ArrayXf>(A.data(),size) = Map<ArrayXf>(B.data(), size);
+			Map<ArrayXf>(B.data(),size) = Map<ArrayXf>(ref, size);
+			
+
+			ref[0] = 10;
+			B(1) = 11;
+			A(2) = 12;
+			outputLog << "A: " << A << "\n";
+			outputLog << "B: " << B << std::endl;
 		}
 		TEST_METHOD(RefTest)
 		{
@@ -85,8 +113,239 @@ namespace EigenTests
 
 	TEST_CLASS(Efficiency)
 	{
-#if NDEBUG
+		// calculate the diagonal elements of the inverse matrix. This can be done in two ways:
+		// 1) Calculate the full inverse matrix and then take the diagonal elements
+		// 2) Calculate the determinant of a subset of the full matrix and divide by the determinant of the full matrix
+		//
+		// This test shows the two methods and compares the execution speed
+		TEST_METHOD(InverseDiagonalTest)
+		{
+			double durationLoop = 1e10;
+			double durationInverse = 1e10;
+			int NChannels = 4; // execution times depend heavily on this value
+			MatrixXcf EigenVectors(NChannels, NChannels);
+			EigenVectors.setRandom();
+			VectorXcf invValues(NChannels);
+			MatrixXcf newMatrix(NChannels - 1, NChannels - 1);
+			VectorXcf EigenInv(NChannels);
 
+			auto start = std::chrono::steady_clock::now();
+			for (auto i = 0; i < NChannels; i++)
+			{
+				int ai = 0;
+				for (auto a = 0; a < NChannels; a++)
+				{
+					if (a != i)
+					{
+						int bi = 0;
+						for (auto b = 0; b < NChannels; b++)
+						{
+							if (b != i)
+							{
+								newMatrix(ai, bi) = EigenVectors(a, b);
+								bi++;
+							}
+						}
+						ai++;
+					}
+				}
+				//outputLog << "newMatrix: " << newMatrix << std::endl; // uncomment this to print newMatrix in each for-loop
+				invValues(i) = newMatrix.determinant();
+			}
+			invValues /= EigenVectors.determinant();
+			auto end = std::chrono::steady_clock::now();
+			auto time = std::chrono::duration<double, std::micro>(end - start).count();
+			durationLoop = std::min(durationLoop, time);
+			
+			start = std::chrono::steady_clock::now();
+			EigenInv = EigenVectors.inverse();
+			end = std::chrono::steady_clock::now();
+			time = std::chrono::duration<double, std::micro>(end - start).count();
+			durationInverse = std::min(durationInverse, time);
+
+			// only calculate one value for reference
+			double durationSingle = 1e10;
+			start = std::chrono::steady_clock::now();
+			std::complex<float> EigenSingleInv = EigenVectors.block(1, 0, NChannels - 1, NChannels - 1).determinant() / EigenVectors.determinant();
+			end = std::chrono::steady_clock::now();
+			time = std::chrono::duration<double, std::micro>(end - start).count();
+			durationSingle = std::min(durationSingle, time);
+
+			// Fixed size matrix
+			Matrix4cf EigenVectorsFix;
+			EigenVectorsFix.setRandom();
+			Matrix4cf EigenInvFix;
+			
+			double durationFix = 1e10;
+			start = std::chrono::steady_clock::now();
+			std::complex<float> EigenFixInv = EigenVectorsFix.block(1, 0, NChannels - 1, NChannels - 1).determinant() / EigenVectorsFix.determinant();
+			end = std::chrono::steady_clock::now();
+			time = std::chrono::duration<double, std::micro>(end - start).count();
+			durationFix = std::min(durationSingle, time);
+
+			double durationInvFix = 1e10;
+			start = std::chrono::steady_clock::now();
+			EigenInvFix = EigenVectorsFix.inverse();
+			end = std::chrono::steady_clock::now();
+			time = std::chrono::duration<double, std::micro>(end - start).count();
+			durationInvFix = std::min(durationSingle, time);
+
+			outputLog << "Values: " << invValues << std::endl;
+			outputLog << "Inverse: " << EigenInv << std::endl;
+
+			outputLog << "Duration loop: " << durationLoop << std::endl;
+			outputLog << "Duration inverse: " << durationInverse << std::endl;
+			outputLog << "Duration single: " << durationSingle << std::endl;
+
+			outputLog << "Duration fixed single: " << durationFix << std::endl;
+			outputLog << "Duration fixed inverse: " << durationInvFix << std::endl;
+		}
+
+//#if NDEBUG
+
+		TEST_METHOD(AssignMult)
+		{
+			int nChannels = 257;
+			int size = 257;
+			int index = 0;
+			int length = 257;
+			Eigen::ArrayXXf Output(nChannels, nChannels);
+			Eigen::ArrayXXf Input(nChannels, nChannels);
+			Eigen::ArrayXXf Input2(nChannels, nChannels);
+			Output.setZero();
+			Input.setRandom();
+			Input2.setRandom();
+
+			auto start = std::chrono::steady_clock::now();
+			//for (auto channel = 0;channel < size;channel++)
+			//{
+			//	Output.block(index,channel, length, 1) = Input.block(index, channel, length, 1) * Input2.block(index, channel, length, 1);
+			//	//Output.col(channel) = Input.col(channel) * Input2.col(channel);
+			//}
+			Output.block(index, 0, length, size) =Input.block(index, 0, length, size) * Input2.block(index, 0, length, size);
+			//Output = Input * Input2;
+			auto end = std::chrono::steady_clock::now();
+			auto time1 = static_cast<double>(std::chrono::duration<double, std::micro>(end - start).count());
+			decltype(Output) res1 = Output;
+
+			start = std::chrono::steady_clock::now();
+			for (auto channel = 0;channel < size;channel++)
+			{
+				float *p1 = &Output(index, channel);
+				float *p2 = &Input(index, channel);
+				float *p3 = &Input2(index, channel);
+				Map<ArrayXf>(p1, length) = Map<ArrayXf>(p2, length) * Map<ArrayXf>(p3, length);
+			}
+			end = std::chrono::steady_clock::now();
+			auto time2 = static_cast<double>(std::chrono::duration<double, std::micro>(end - start).count());
+			decltype(Output) res2 = Output;
+
+			start = std::chrono::steady_clock::now();
+			for (auto channel = 0;channel < size;channel++)
+			{
+				float *p1 = &Output(index, channel);
+				float *p2 = &Input(index, channel);
+				float *p3 = &Input2(index, channel);
+				assignMultEigen(p1, p2, p3, length);
+			}
+			//float *p1 = &Output(index, 0);
+			//float *p2 = &Input(index, 0);
+			//float *p3 = &Input2(index, 0);
+			//assignMultEigen(p1, p2, p3, length*size);
+			end = std::chrono::steady_clock::now();
+			auto time3 = static_cast<double>(std::chrono::duration<double, std::micro>(end - start).count());
+			decltype(Output) res3 = Output;
+
+
+			outputLog << "Time 1: " << time1 << "\n";
+			outputLog << "Time 2: " << time2 << "\n";
+			outputLog << "Time 3: " << time3 << "\n";
+			outputLog << "Error2: " << (res2-res1).abs2().sum() << "\n";
+			outputLog << "Error3: " << (res3-res1).abs2().sum() << std::endl;
+		}
+
+		TEST_METHOD(AssignForLoopVsEigen)
+		{
+			// put circular loopback buffer into non-circular affine matrix
+			int filterLength = 120;
+			int orderAffine = 5;
+			int bufferLength = filterLength + orderAffine - 1;
+			int circCounter = 32;
+			int affineCounter = 2;
+			int nBands = 257;
+
+			Eigen::ArrayXXcf buffersLoopback(bufferLength, nBands);
+			buffersLoopback.setRandom();
+			std::vector<Eigen::ArrayXXcf> bufferAffine;
+			bufferAffine.resize(nBands);
+			for (auto &buffer : bufferAffine) { buffer.resize(filterLength, orderAffine); }
+
+			// output test data
+			std::vector<Eigen::ArrayXXcf> outTest;
+			outTest.resize(nBands);
+			for (auto &buffer : outTest) { buffer.resize(filterLength, orderAffine); }
+			
+			const int bufferLength1 = std::min(bufferLength - circCounter, filterLength);
+			const int bufferLength2 = filterLength - bufferLength1;
+
+			auto start = std::chrono::steady_clock::now();
+			for (auto ibin = 0; ibin < nBands; ibin++)
+			{
+				bufferAffine[ibin].col(affineCounter).head(bufferLength1) = buffersLoopback.col(ibin).segment(circCounter, bufferLength1);
+				bufferAffine[ibin].col(affineCounter).tail(bufferLength2) = buffersLoopback.col(ibin).head(bufferLength2);
+			}
+			auto end = std::chrono::steady_clock::now();
+			auto duration1 = static_cast<double>(std::chrono::duration<double, std::micro>(end - start).count());
+
+			// save output
+			for (auto ibin = 0; ibin < nBands; ibin++)
+			{
+				outTest[ibin] = bufferAffine[ibin];
+				bufferAffine[ibin] = 0;
+			}
+
+			start = std::chrono::steady_clock::now();
+			std::complex<float> *bp2 = buffersLoopback.data();
+			for (auto ibin = 0; ibin < nBands; ibin++, bp2 += bufferLength)
+			{
+				std::complex<float> *bp1 = bufferAffine[ibin].col(affineCounter).data();
+				Eigen::Map<ArrayXcf>(bp1, bufferLength1) = Eigen::Map<ArrayXcf>(bp2 + circCounter, bufferLength1);
+				Eigen::Map<ArrayXcf>(bp1 + bufferLength1, bufferLength2) = Eigen::Map<ArrayXcf>(bp2, bufferLength2);
+			}
+			end = std::chrono::steady_clock::now();
+			auto duration2 = static_cast<double>(std::chrono::duration<double, std::micro>(end - start).count());
+
+			float error2 = 0;
+			for (auto ibin = 0; ibin < nBands; ibin++)
+			{
+				error2 += (bufferAffine[ibin].col(affineCounter) - outTest[ibin].col(affineCounter)).abs2().mean();
+				bufferAffine[ibin] = 0;
+			}
+			outputLog << "Error2: " << error2 << "\n";
+
+			start = std::chrono::steady_clock::now();
+			
+			for (auto ibin = 0; ibin < nBands; ibin++)
+			{
+				std::complex<float> *bp1 = bufferAffine[ibin].col(affineCounter).data();
+				bp2 = buffersLoopback.col(ibin).data();
+				assignCircularEigen(bp1, bp2, circCounter, bufferLength1, bufferLength2);
+			}
+			end = std::chrono::steady_clock::now();
+			auto duration3 = static_cast<double>(std::chrono::duration<double, std::micro>(end - start).count());
+
+			float error3 = 0;
+			for (auto ibin = 0; ibin < nBands; ibin++)
+			{
+				error3 += (bufferAffine[ibin].col(affineCounter) - outTest[ibin].col(affineCounter)).abs2().mean();
+			}
+			outputLog << "Error3: " << error3 << "\n";
+
+			outputLog << "Time 1: " << duration1 << "\n";
+			outputLog << "Time 2: " << duration2 << "\n";
+			outputLog << "Time 3: " << duration3 << "\n";
+			outputLog << std::endl;
+		}
 		TEST_METHOD(EigenValues)
 		{
 			srand((unsigned int)time(0));
@@ -107,9 +366,7 @@ namespace EigenTests
 			{
 				auto start = std::chrono::steady_clock::now();
 				es.compute(mat);
-				auto end = std::chrono::steady_clock::now();
-				auto time = std::chrono::duration<double, std::micro>(end - start).count();
-				duration = std::min(duration, time);
+				
 			}
 			outputLog << "Execution time of ProcessOn is: " << duration << "us.\n";
 			MatrixXcf ev = es.eigenvalues();
@@ -304,6 +561,6 @@ namespace EigenTests
 			Assert::IsTrue(error*error < 1e-8f);
 
 		}
-#endif // #if NDEBUG
+//#endif // #if NDEBUG
 	};
 }

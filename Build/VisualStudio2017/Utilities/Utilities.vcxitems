@@ -17,6 +17,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\ApproximationMath.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\AudioFile.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\pffft.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\solveLinearSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\ApproximationMath.h" />
@@ -25,5 +26,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\FormatHandling.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\HelperFunctions.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\pffft.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\..\Utilities\solveLinearSystem.h" />
   </ItemGroup>
 </Project>

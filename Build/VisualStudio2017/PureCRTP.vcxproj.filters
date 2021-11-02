@@ -192,12 +192,36 @@
     <ClInclude Include="..\..\src\FrequencyDomain\DetectTransientSmooth.h">
       <Filter>Header Files\FrequencyDomain</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\Deconvolver.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\SpatialNoiseReduction.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\PredictorNLMS.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerNLMSMinPow.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AsynchronousBase\SeparateTonalPrediction.h">
+      <Filter>Header Files\AsynchronousBase</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\FrequencyDomain\CriticalBands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\AsynchronousBase\VirtualizationHeadphones.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\FrequencyDomain\EchoCancellerNLMS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\FrequencyDomain\PredictorNLMS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\FrequencyDomain\EchoCancellerNLMSMinPow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

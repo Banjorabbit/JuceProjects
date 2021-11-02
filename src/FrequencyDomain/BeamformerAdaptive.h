@@ -10,6 +10,11 @@ struct I::BeamformerAdaptive
 class BeamformerAdaptive : public Base<BeamformerAdaptive, I::BeamformerAdaptive, O::Complex>
 {
 	friend Base<BeamformerAdaptive, I::BeamformerAdaptive, O::Complex>;
+
+public:
+	Eigen::ArrayXcf GetNoise() const { return D.OutNoise; }
+	Eigen::ArrayXf GetNoisePower() const { return D.NoisePower; }
+
 protected:
 	void CalculateFilter()
 	{
@@ -17,18 +22,37 @@ protected:
 		D.Rn[D.CurrentBand] += 1e-17f*Eigen::MatrixXcf::Identity(C.NChannels, C.NChannels);
 		D.EigenSolver.compute(D.Rx[D.CurrentBand], D.Rn[D.CurrentBand]);
 		D.EigenVectors = D.EigenSolver.eigenvectors();
+		// calculate speech-distortion-ratio wiener gain
 		const float px = std::real((D.EigenVectors.col(C.NChannels - 1).adjoint() * D.Rx[D.CurrentBand] * D.EigenVectors.col(C.NChannels - 1))(0));
 		const float pn = std::real((D.EigenVectors.col(C.NChannels - 1).adjoint() * D.Rn[D.CurrentBand] * D.EigenVectors.col(C.NChannels - 1))(0));
 		const float gain = std::max(1.f / (1.f + pn / std::max(px - pn, 1e-20f) * P.SpeechDistortionRatio), D.WienerGainMinimum); // Wiener gain written so it is stable when px-pn=0 and P.SpeechDistortionRatio=0 (should give gain=1)
-		D.EigenVectors.col(C.NChannels - 1) *= -D.EigenVectors.block(1, 0, C.NChannels - 1, C.NChannels - 1).determinant() / D.EigenVectors.determinant();
-		// put resulting beamformer for current band into Filter 
-		D.Filter.row(D.CurrentBand) = D.EigenVectors.col(C.NChannels - 1).conjugate() * gain;
+
+		Eigen::MatrixXcf invEigen = D.EigenVectors.inverse();
+
+		// calculate max_snr beamformer with mic 0 as reference
+		Eigen::VectorXcf filter = D.EigenVectors.col(C.NChannels - 1) * invEigen(C.NChannels-1,0);
+		// put resulting conjugated beamformer for current band into Filter 
+		D.Filter.row(D.CurrentBand) = filter.adjoint() * gain;
+
+		if (P.EnableNoiseFilter)
+		{
+			// calculate min_snr beamformer with mic 0 as reference
+			Eigen::VectorXcf filterMin = D.EigenVectors.col(0) *  invEigen(C.NChannels - 1, C.NChannels-1);
+			const float noisePowMaxSNR = (filter.adjoint() * D.Rn[D.CurrentBand] * filter)(0).real();
+			const float noisePowMinSNR = (filterMin.adjoint() * D.Rn[D.CurrentBand] * filterMin)(0).real();
+			float signalPow = (filter.adjoint() * D.Rx[D.CurrentBand] * filter)(0).real();
+			float speechPower = std::max(signalPow - noisePowMaxSNR, 0.f);
+			D.NoisePower(D.CurrentBand) = noisePowMaxSNR + std::max(speechPower - noisePowMaxSNR,0.f)/2; // this looks pretty weird? Shouldn't it just be noisePowMaxSNR?
+			// put resulting conjugated beamformer for current band into Filter 
+			D.FilterNoise.row(D.CurrentBand) = filterMin.adjoint() * gain * std::min(std::max(std::sqrt(noisePowMaxSNR / std::max(noisePowMinSNR,1e-20f)), .001f), 100.f);
+		}
+		
 	}
 
 private:
 	struct Coefficients
 	{
-		int NChannels = 2;
+		int NChannels = 4;
 		float FilterbankRate = 125.f;
 		int NBands = 257;
 	} C;
@@ -41,12 +65,15 @@ private:
 		ConstrainedType<float> FilterUpdateRate = { 8.f, 0.001f, 100.f }; // Hz
 		ConstrainedType<float> SpeechDistortionRatio = { 0.f, 0.f, 100.f };
 		ConstrainedType<float> WienerGainMinimumdB = { -10.f, -60.f, 0.f };
+		bool EnableNoiseFilter = false;
 	} P;
 
 	struct Data
 	{
+		Eigen::ArrayXf NoisePower;
 		std::vector<Eigen::MatrixXcf> Rx, Rn;
-		Eigen::ArrayXXcf Filter;
+		Eigen::ArrayXXcf Filter, FilterNoise;
+		Eigen::ArrayXcf OutNoise;
 		Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::MatrixXcf> EigenSolver;
 		Eigen::MatrixXcf EigenVectors, Rxn;
 		int CurrentBand, FilterUpdatesPerFrame;
@@ -55,11 +82,14 @@ private:
 
 		void Reset()
 		{
+			NoisePower.setZero();
 			CurrentBand = 0;
 			ActivityFlag = false;
 			EigenVectors.setZero();
 			Filter.setZero();
 			Filter.col(0) = 1;
+			FilterNoise.setZero();
+			OutNoise.setZero();
 			for (auto i = 0u; i < Rx.size(); i++)
 			{
 				Rx[i].setZero();
@@ -71,8 +101,11 @@ private:
 		};
 		bool InitializeMemory(const Coefficients& c)
 		{
+			NoisePower.resize(c.NBands);
 			EigenVectors.resize(c.NChannels, c.NChannels);
 			Filter.resize(c.NBands, c.NChannels);
+			FilterNoise.resize(c.NBands, c.NChannels);
+			OutNoise.resize(c.NBands);
 			Rx.resize(c.NBands);
 			for (auto& rx : Rx) { rx.resize(c.NChannels, c.NChannels); }
 			Rn.resize(c.NBands);
@@ -84,6 +117,9 @@ private:
 		size_t GetAllocatedMemorySize() const
 		{
 			auto size = Filter.GetAllocatedMemorySize();
+			size += NoisePower.GetAllocatedMemorySize();
+			size += FilterNoise.GetAllocatedMemorySize();
+			size += OutNoise.GetAllocatedMemorySize();
 			for (auto& rx : Rx) { size += rx.GetAllocatedMemorySize(); }
 			for (auto& rn : Rn) { size += rn.GetAllocatedMemorySize(); }
 			size += EigenVectors.GetAllocatedMemorySize();
@@ -119,6 +155,11 @@ private:
 		}
 
 		yFreq = (xFreq.Input * D.Filter).rowwise().sum(); // this has been profiled to be just as fast as multiplying with ones or summing in a for-loop
+
+		if (P.EnableNoiseFilter)
+		{
+			D.OutNoise = (xFreq.Input * D.FilterNoise).rowwise().sum(); // this has been profiled to be just as fast as multiplying with ones or summing in a for-loop
+		}
 	}
 
 	void ProcessOff(Input xFreq, Output yFreq) { yFreq = xFreq.Input.col(0); }

@@ -165,12 +165,30 @@
     <ClInclude Include="..\..\src\AsynchronousStreaming\Distortion.h">
       <Filter>Header Files\AsynchronousStreaming</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerNLMS.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\EchoCancellerNLMSPA.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\FrequencyDomain\PredictorNLMS.h">
+      <Filter>Header Files\FrequencyDomain</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\AsynchronousStreaming\VirtualizationHeadphones.cpp">
+    <ClCompile Include="..\..\src\FrequencyDomain\CriticalBands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\FrequencyDomain\CriticalBands.cpp">
+    <ClCompile Include="..\..\src\AsynchronousBase\VirtualizationHeadphones.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\FrequencyDomain\EchoCancellerNLMS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\FrequencyDomain\EchoCancellerNLMSPA.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\FrequencyDomain\PredictorNLMS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
