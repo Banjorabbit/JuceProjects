@@ -5,6 +5,10 @@
               displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="bWk46w" name="SeparateTonalTextureTransient">
     <GROUP id="{877DFE0E-D5AE-0B95-5F0E-A5A5882BCE34}" name="Source">
+      <FILE id="IClMwy" name="EchoCancellerNLMSMinPow.cpp" compile="1" resource="0"
+            file="../../PureCRTP/src/FrequencyDomain/EchoCancellerNLMSMinPow.cpp"/>
+      <FILE id="UUCOS3" name="EchoCancellerNLMS.cpp" compile="1" resource="0"
+            file="../../PureCRTP/src/FrequencyDomain/EchoCancellerNLMS.cpp"/>
       <FILE id="Ch3Qop" name="pffft.c" compile="1" resource="0" file="../../PureCRTP/Utilities/pffft.c"/>
       <FILE id="wIUcFK" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
